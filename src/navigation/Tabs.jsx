@@ -110,7 +110,7 @@ const Tabs = props => {
             alignItems: 'center',
           }}
           onPress={() => {
-            if (currentScreenName === 'Home') {
+            if (currentScreenName === 'LogInHome') {
               navigation.navigate('Login');
             } else {
               openLinkInWebView();
@@ -120,7 +120,8 @@ const Tabs = props => {
             source={props.center}
             style={{
               resizeMode: 'contain',
-              top: -34,
+              // top: -34,
+              top: -18,
               width: currentScreenName === 'Home' ? 90 : 85,
             }}
           />

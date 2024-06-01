@@ -26,6 +26,8 @@ const Chasis = props => {
   //For parallel comm
   const [selectedId, setSelectedId] = useState(null); // State to hold the selected ID of the current device
   const [selections, setSelections] = useState({}); // State to hold the selections of all devices
+  const [otherSelections, setOtherSelections] = useState({}); //State to hold the selections of all the other devices
+  const [selectedWheelDataKey, setSelectedWheelDataKey] = useState({}); //State to hold the selections of all the other devices
   const [ws, setWs] = useState(null); // State to hold the WebSocket instance
 
   const [showMessage, setShowMessage] = useState(false);
@@ -379,6 +381,17 @@ const Chasis = props => {
           ...prevSelections,
           [id]: selected,
         }));
+        setOtherSelections(prevSelections => {
+          // Create a new object based on previous selections
+          const updatedSelections = {...prevSelections, [id]: selected};
+
+          // Set the key for your selected wheel to false, if it exists
+          if (selectedWheelDataKey != null) {
+            updatedSelections[selectedWheelDataKey] = false;
+          }
+
+          return updatedSelections;
+        });
       } catch (error) {
         console.log('Failed to parse message:', error);
       }
@@ -397,14 +410,50 @@ const Chasis = props => {
     }
   };
 
-  const handleSelection = id => {
-    if (selectedId !== id) {
-      console.log(`Selecting item ${id}`);
-      setSelectedId(id);
-      sendMessage(id, true);
+  // const handleSelection = (id, newSelectedWheelData) => {
+  //   //Check if the item is already selected
+  //   if (selections[id] === undefined || selections[id] === false) {
+  //     if (selectedId !== id) {
+  //       console.log(`Selecting item ${id}`);
+  //       setSelectedId(id);
+  //       sendMessage(id, true);
 
-      if (selectedId !== null) {
-        sendMessage(selectedId, false);
+  //       if (selectedId !== null) {
+  //         sendMessage(selectedId, false);
+  //       }
+  //       // Dispatch the action to set selectedWheelData in the Redux store
+  //       dispatch(setSelectedWheelDataGlobal(newSelectedWheelData));
+  //     }
+  //   } else {
+  //     console.log(`Item ${id} is already selected by another device.`);
+  //   }
+  // };
+  const handleSelection = (id, newSelectedWheelData) => {
+    //Check if the item is already selected
+
+    if (selectedId !== id) {
+      if (selections[id] === undefined || selections[id] === false) {
+        console.log(`Selecting item ${id}`);
+        setSelectedId(id);
+        sendMessage(id, true);
+
+        if (selectedId !== null) {
+          sendMessage(selectedId, false);
+        }
+        // Dispatch the action to set selectedWheelData in the Redux store
+        dispatch(setSelectedWheelDataGlobal(newSelectedWheelData));
+        console.log('selectedWheelDataGlobal:', selectedWheelDataGlobal);
+      } else {
+        console.log(`Item ${id} is already selected by another device.`);
+        //make selection null
+        // dispatch(
+        //   setSelectedWheelDataGlobal({
+        //     axle_location: null,
+        //     wheel_pos: null,
+        //     wheel_id: null,
+        //     wheel_tin: null,
+        //   }),
+        // );
       }
     }
   };
@@ -510,10 +559,15 @@ const Chasis = props => {
     };
     console.log('Selected Wheel Data for spare:', newSelectedWheelData);
     const key = JSON.stringify(newSelectedWheelDataKey); // Constructing unique key
-    handleSelection(key);
+    setSelectedWheelDataKey(key);
+    handleSelection(key, newSelectedWheelData);
     // setSelectedWheelData(newSelectedWheelData);
     // Dispatch the action to set selectedWheelData in the Redux store
-    dispatch(setSelectedWheelDataGlobal(newSelectedWheelData));
+    // dispatch(setSelectedWheelDataGlobal(newSelectedWheelData));
+  };
+
+  const handleSetSelectedWheelDataKey = key => {
+    setSelectedWheelDataKey(key);
   };
 
   return (
@@ -552,7 +606,9 @@ const Chasis = props => {
         enableRescan={props.enableRescan}
         // selectedId={selectedId}
         selections={selections}
+        otherSelections={otherSelections}
         handleSelection={handleSelection}
+        setSelectedWheelDataKey={handleSetSelectedWheelDataKey}
       />
       <View
         style={{
@@ -579,11 +635,59 @@ const Chasis = props => {
                 // wheel_tin: wheel.wheel_tin ? wheel.wheel_tin : null,
               }); // Constructing unique key
               const isSelected = selections[id] || false;
+              const otherSelected = otherSelections[id] || false;
               return (
                 <View>
-                  {!props.enableRescan &&
-                  wheel.tin != '' &&
-                  wheel.tin != null ? (
+                  {otherSelected ? (
+                    <TouchableOpacity
+                      // key={wheel.wheel_id}
+                      key={wheel.tin}
+                      style={[
+                        styles.spare,
+                        {
+                          backgroundColor:
+                            wheel.tin != '' && wheel.tin != null
+                              ? '#4CAF50'
+                              : isSelected
+                              ? '#ffbf00'
+                              : '#ff2800',
+                        },
+                        {
+                          height:
+                            selectedButtonSpare === index &&
+                            selectedWheelDataGlobal.axle_location ===
+                              spareAxle.axle_location
+                              ? 40
+                              : 35,
+                        },
+                        {
+                          width:
+                            selectedButtonSpare === index &&
+                            selectedWheelDataGlobal.axle_location ===
+                              spareAxle.axle_location
+                              ? 60
+                              : 55,
+                        },
+                      ]}
+                      onPress={() => {
+                        dispatch(setTinGlobal(wheel.tin));
+                        // dispatch(
+                        //   setSelectedWheelDataGlobal({
+                        //     axle_location: null,
+                        //     wheel_pos: null,
+                        //     wheel_id: null,
+                        //     wheel_tin: null,
+                        //   }),
+                        // );
+                        // if (selectedId !== null) {
+                        //   sendMessage(selectedId, false);
+                        // }
+                      }}>
+                      <Text style={styles.text}>S{wheel.wheel_id}</Text>
+                    </TouchableOpacity>
+                  ) : !props.enableRescan &&
+                    wheel.tin != '' &&
+                    wheel.tin != null ? (
                     <TouchableOpacity
                       // key={wheel.wheel_id}
                       key={wheel.tin}
@@ -620,14 +724,17 @@ const Chasis = props => {
                       ]}
                       onPress={() => {
                         dispatch(setTinGlobal(wheel.tin));
-                        dispatch(
-                          setSelectedWheelDataGlobal({
-                            axle_location: null,
-                            wheel_pos: null,
-                            wheel_id: null,
-                            wheel_tin: null,
-                          }),
-                        );
+                        // dispatch(
+                        //   setSelectedWheelDataGlobal({
+                        //     axle_location: null,
+                        //     wheel_pos: null,
+                        //     wheel_id: null,
+                        //     wheel_tin: null,
+                        //   }),
+                        // );
+                        // if (selectedId !== null) {
+                        //   sendMessage(selectedId, false);
+                        // }
                       }}>
                       <Text style={styles.text}>S{wheel.wheel_id}</Text>
                     </TouchableOpacity>
@@ -772,7 +879,9 @@ const Chasis = props => {
         enableRescan={props.enableRescan}
         // selectedId={selectedId}
         selections={selections}
+        otherSelections={otherSelections}
         handleSelection={handleSelection}
+        setSelectedWheelDataKey={handleSetSelectedWheelDataKey}
       />
     </View>
   );

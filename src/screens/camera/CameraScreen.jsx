@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Modal,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useSelector, useDispatch} from 'react-redux';
 import {setTinGlobal} from '../../state/tinslice';
 import {setCreden} from '../../state/credenSlice';
@@ -81,12 +82,13 @@ const CameraScreen = ({navigation, route}) => {
       const response = await axios.put(`${creden.URI}/car_wvid/`, null, {
         params: {
           stream_key: `${creden.ticket}`,
-          id: route.params.id,
+          // id: route.params.id,
           vin: route.params.vin,
           axle_location: selectedWheelData.axle_location,
           wheel_pos: selectedWheelData.wheel_pos,
           wheel_id: selectedWheelData.wheel_id,
           token: globalToken,
+          forced_entry: true,
         },
         headers: {
           Accept: 'application/json',
@@ -137,8 +139,12 @@ const CameraScreen = ({navigation, route}) => {
                   RTMP_URI: creden.RTMP_URI,
                 }),
               );
+              AsyncStorage.setItem('token', '');
+              AsyncStorage.setItem('ticket', '');
+              AsyncStorage.setItem('isLoggedIn', '');
               console.log('Logout successful', response.data);
-              navigation.navigate('Login');
+              // navigation.navigate('Login');
+              navigation.navigate('LoginNav', {screen: 'Login'});
             } catch (error) {
               console.error('Error logging out', error);
             }
@@ -259,7 +265,7 @@ const CameraScreen = ({navigation, route}) => {
                   navigation.navigate('NewSmodel', {
                     model: route.params.model,
                     responseData: headers['output'],
-                    id: route.params.id,
+                    // id: route.params.id,
                     // elapsedTime: alertTime,
                   });
                 }}>

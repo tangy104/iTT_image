@@ -12,8 +12,11 @@ import {
   useWindowDimensions,
   Alert,
   PermissionsAndroid,
+  BackHandler,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
+import {useFocusEffect} from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 // import {LinearGradient} from 'expo-linear-gradient';
 // import { useFonts } from "expo-font";
 // import {useFonts, allura, Allura_400Regular} from '@expo-google-fonts/allura';
@@ -57,7 +60,7 @@ import {URI} from '@env';
 //   password: Yup.string().required('Password is required'),
 // });
 
-const Home = ({navigation}) => {
+const ScanVIN = ({navigation}) => {
   //   const [fontsLoaded] = useFonts({
   //     allura,
   //     Allura_400Regular,
@@ -76,6 +79,43 @@ const Home = ({navigation}) => {
   console.log('ticket-', creden.ticket);
 
   console.log('URI:', URI);
+
+  const checkLogin = async () => {
+    // const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
+    const token = await AsyncStorage.getItem('token');
+    const ticket = await AsyncStorage.getItem('ticket');
+    dispatch(setTokenGlobal(token));
+    console.log('token from scan vin:', token);
+    dispatch(
+      setCreden({
+        ticket: ticket,
+        URI: creden.URI,
+        WS_URI: creden.WS_URI,
+        RTMP_URI: creden.RTMP_URI,
+      }),
+    );
+
+    // console.log('at main home', data);
+    // setIsLoggedIn(data === 'true');
+  };
+
+  const handleBackPress = () => {
+    navigation.navigate('StackHome');
+    return true;
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+      return () => {
+        BackHandler.removeEventListener('hardwareBackPress', handleBackPress);
+      };
+    }),
+  );
+
+  useEffect(() => {
+    checkLogin();
+  }, []);
 
   //posting by axios
   const handleLogin = async values => {
@@ -179,8 +219,12 @@ const Home = ({navigation}) => {
                   RTMP_URI: creden.RTMP_URI,
                 }),
               );
+              AsyncStorage.setItem('token', '');
+              AsyncStorage.setItem('ticket', '');
+              AsyncStorage.setItem('isLoggedIn', '');
               console.log('Logout successful', response.data);
-              navigation.navigate('Login');
+              // navigation.navigate('Login');
+              navigation.navigate('LoginNav', {screen: 'Login'});
             } catch (error) {
               console.error('Error logging out', error);
             }
@@ -431,7 +475,7 @@ const Home = ({navigation}) => {
   );
 };
 
-export default Home;
+export default ScanVIN;
 
 const styles = StyleSheet.create({
   safeContainer: {

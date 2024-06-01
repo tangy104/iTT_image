@@ -35,11 +35,12 @@ const SAxle = props => {
     };
     setSelectedWheelData(newSelectedWheelData);
     const key = JSON.stringify(newSelectedWheelDataKey); // Constructing unique key
-    props.handleSelection(key);
+    props.setSelectedWheelDataKey(key);
+    props.handleSelection(key, newSelectedWheelData);
     // console.log("newSelectedWheelData:", newSelectedWheelData);
     // Dispatch the action to set selectedWheelData in the Redux store
-    dispatch(setSelectedWheelDataGlobal(newSelectedWheelData));
-    console.log('selectedWheelDataGlobal:', selectedWheelDataGlobal);
+    // dispatch(setSelectedWheelDataGlobal(newSelectedWheelData));
+    // console.log('selectedWheelDataGlobal:', selectedWheelDataGlobal);
   };
 
   const handleButtonPressFR = (buttonIndex, tin) => {
@@ -66,9 +67,10 @@ const SAxle = props => {
     };
     setSelectedWheelData(newSelectedWheelData);
     const key = JSON.stringify(newSelectedWheelDataKey); // Constructing unique key
-    props.handleSelection(key);
+    props.setSelectedWheelDataKey(key);
+    props.handleSelection(key, newSelectedWheelData);
     // Dispatch the action to set selectedWheelData in the Redux store
-    dispatch(setSelectedWheelDataGlobal(newSelectedWheelData));
+    // dispatch(setSelectedWheelDataGlobal(newSelectedWheelData));
   };
 
   const handleButtonPressPA = (buttonIndex, tin) => {
@@ -95,9 +97,10 @@ const SAxle = props => {
     };
     setSelectedWheelData(newSelectedWheelData);
     const key = JSON.stringify(newSelectedWheelDataKey); // Constructing unique key
-    props.handleSelection(key);
+    props.setSelectedWheelDataKey(key);
+    props.handleSelection(key, newSelectedWheelData);
     // Dispatch the action to set selectedWheelData in the Redux store
-    dispatch(setSelectedWheelDataGlobal(newSelectedWheelData));
+    // dispatch(setSelectedWheelDataGlobal(newSelectedWheelData));
   };
 
   const handleButtonPressRF = (buttonIndex, tin) => {
@@ -124,9 +127,10 @@ const SAxle = props => {
     };
     setSelectedWheelData(newSelectedWheelData);
     const key = JSON.stringify(newSelectedWheelDataKey); // Constructing unique key
-    props.handleSelection(key);
+    props.setSelectedWheelDataKey(key);
+    props.handleSelection(key, newSelectedWheelData);
     // Dispatch the action to set selectedWheelData in the Redux store
-    dispatch(setSelectedWheelDataGlobal(newSelectedWheelData));
+    // dispatch(setSelectedWheelDataGlobal(newSelectedWheelData));
   };
 
   const handleButtonPressRR = (buttonIndex, tin) => {
@@ -153,9 +157,10 @@ const SAxle = props => {
     };
     setSelectedWheelData(newSelectedWheelData);
     const key = JSON.stringify(newSelectedWheelDataKey); // Constructing unique key
-    props.handleSelection(key);
+    props.setSelectedWheelDataKey(key);
+    props.handleSelection(key, newSelectedWheelData);
     // Dispatch the action to set selectedWheelData in the Redux store
-    dispatch(setSelectedWheelDataGlobal(newSelectedWheelData));
+    // dispatch(setSelectedWheelDataGlobal(newSelectedWheelData));
   };
 
   const handleButtonPressTA = (buttonIndex, tin) => {
@@ -182,9 +187,10 @@ const SAxle = props => {
     };
     setSelectedWheelData(newSelectedWheelData);
     const key = JSON.stringify(newSelectedWheelDataKey); // Constructing unique key
-    props.handleSelection(key);
+    props.setSelectedWheelDataKey(key);
+    props.handleSelection(key, newSelectedWheelData);
     // Dispatch the action to set selectedWheelData in the Redux store
-    dispatch(setSelectedWheelDataGlobal(newSelectedWheelData));
+    // dispatch(setSelectedWheelDataGlobal(newSelectedWheelData));
   };
 
   // Function to filter data by axle_location
@@ -232,7 +238,54 @@ const SAxle = props => {
                     // wheel_tin: wheel.wheel_tin,
                   }); // Constructing unique key
                   const isSelected = props.selections[id] || false;
-                  return !props.enableRescan &&
+                  const otherSelected = props.otherSelections[id] || false;
+                  return otherSelected ? (
+                    <TouchableOpacity
+                      key={`${index}-${wheelIndex}`}
+                      style={[
+                        styles.tyre,
+                        {
+                          backgroundColor:
+                            wheel.tin != '' && wheel.tin != null
+                              ? '#4CAF50'
+                              : isSelected
+                              ? '#ffbf00'
+                              : '#ff2800',
+                        },
+                        {
+                          height:
+                            props.selectedButtonFF === wheelIndex &&
+                            selectedWheelDataGlobal.axle_location ===
+                              axle.axle_location
+                              ? 40
+                              : 35,
+                        },
+                        {
+                          width:
+                            props.selectedButtonFF === wheelIndex &&
+                            selectedWheelDataGlobal.axle_location ===
+                              axle.axle_location
+                              ? 60
+                              : 55,
+                        },
+                      ]}
+                      onPress={() => {
+                        dispatch(setTinGlobal(wheel.tin));
+                        // dispatch(
+                        //   setSelectedWheelDataGlobal({
+                        //     axle_location: null,
+                        //     wheel_pos: null,
+                        //     wheel_id: null,
+                        //     wheel_tin: null,
+                        //   }),
+                        // );
+                        // if (selectedId !== null) {
+                        //   sendMessage(selectedId, false);
+                        // }
+                      }}>
+                      <Text style={styles.text}>FF</Text>
+                    </TouchableOpacity>
+                  ) : !props.enableRescan &&
                     wheel.tin != '' &&
                     wheel.tin != null ? (
                     <TouchableOpacity
@@ -270,14 +323,17 @@ const SAxle = props => {
                       ]}
                       onPress={() => {
                         dispatch(setTinGlobal(wheel.tin));
-                        dispatch(
-                          setSelectedWheelDataGlobal({
-                            axle_location: null,
-                            wheel_pos: null,
-                            wheel_id: null,
-                            wheel_tin: null,
-                          }),
-                        );
+                        // dispatch(
+                        //   setSelectedWheelDataGlobal({
+                        //     axle_location: null,
+                        //     wheel_pos: null,
+                        //     wheel_id: null,
+                        //     wheel_tin: null,
+                        //   }),
+                        // );
+                        // if (selectedId !== null) {
+                        //   sendMessage(selectedId, false);
+                        // }
                       }}>
                       <Text style={styles.text}>FF</Text>
                     </TouchableOpacity>
@@ -338,7 +394,51 @@ const SAxle = props => {
                     // wheel_tin: wheel.wheel_tin,
                   }); // Constructing unique key
                   const isSelected = props.selections[id] || false;
-                  return !props.enableRescan &&
+                  const otherSelected = props.otherSelections[id] || false;
+                  return otherSelected ? (
+                    <TouchableOpacity
+                      key={`${index}-${wheelIndex}`}
+                      style={[
+                        styles.tyre,
+                        {
+                          backgroundColor:
+                            wheel.tin != '' && wheel.tin != null
+                              ? '#4CAF50'
+                              : isSelected
+                              ? '#ffbf00'
+                              : '#ff2800',
+                        },
+                        {
+                          height:
+                            props.selectedButtonFR === wheelIndex &&
+                            selectedWheelDataGlobal.axle_location ===
+                              axle.axle_location
+                              ? 40
+                              : 35,
+                        },
+                        {
+                          width:
+                            props.selectedButtonFR === wheelIndex &&
+                            selectedWheelDataGlobal.axle_location ===
+                              axle.axle_location
+                              ? 60
+                              : 55,
+                        },
+                      ]}
+                      onPress={() => {
+                        dispatch(setTinGlobal(wheel.tin));
+                        // dispatch(
+                        //   setSelectedWheelDataGlobal({
+                        //     axle_location: null,
+                        //     wheel_pos: null,
+                        //     wheel_id: null,
+                        //     wheel_tin: null,
+                        //   }),
+                        // );
+                      }}>
+                      <Text style={styles.text}>FR</Text>
+                    </TouchableOpacity>
+                  ) : !props.enableRescan &&
                     wheel.tin != '' &&
                     wheel.tin != null ? (
                     <TouchableOpacity
@@ -376,14 +476,14 @@ const SAxle = props => {
                       ]}
                       onPress={() => {
                         dispatch(setTinGlobal(wheel.tin));
-                        dispatch(
-                          setSelectedWheelDataGlobal({
-                            axle_location: null,
-                            wheel_pos: null,
-                            wheel_id: null,
-                            wheel_tin: null,
-                          }),
-                        );
+                        // dispatch(
+                        //   setSelectedWheelDataGlobal({
+                        //     axle_location: null,
+                        //     wheel_pos: null,
+                        //     wheel_id: null,
+                        //     wheel_tin: null,
+                        //   }),
+                        // );
                       }}>
                       <Text style={styles.text}>FR</Text>
                     </TouchableOpacity>
@@ -454,7 +554,51 @@ const SAxle = props => {
                   }); // Constructing unique key
                   //   console.log('id for comparision:', id);
                   const isSelected = props.selections[id] || false;
-                  return !props.enableRescan &&
+                  const otherSelected = props.otherSelections[id] || false;
+                  return otherSelected ? (
+                    <TouchableOpacity
+                      key={`${index}-${wheelIndex}`}
+                      style={[
+                        styles.tyre,
+                        {
+                          backgroundColor:
+                            wheel.tin != '' && wheel.tin != null
+                              ? '#4CAF50'
+                              : isSelected
+                              ? '#ffbf00'
+                              : '#ff2800',
+                        },
+                        {
+                          height:
+                            props.selectedButtonPA === wheelIndex &&
+                            selectedWheelDataGlobal.axle_location ===
+                              axle.axle_location
+                              ? 40
+                              : 35,
+                        },
+                        {
+                          width:
+                            props.selectedButtonPA === wheelIndex &&
+                            selectedWheelDataGlobal.axle_location ===
+                              axle.axle_location
+                              ? 60
+                              : 55,
+                        },
+                      ]}
+                      onPress={() => {
+                        dispatch(setTinGlobal(wheel.tin));
+                        // dispatch(
+                        //   setSelectedWheelDataGlobal({
+                        //     axle_location: null,
+                        //     wheel_pos: null,
+                        //     wheel_id: null,
+                        //     wheel_tin: null,
+                        //   }),
+                        // );
+                      }}>
+                      <Text style={styles.text}>PA</Text>
+                    </TouchableOpacity>
+                  ) : !props.enableRescan &&
                     wheel.tin != '' &&
                     wheel.tin != null ? (
                     <TouchableOpacity
@@ -492,14 +636,14 @@ const SAxle = props => {
                       ]}
                       onPress={() => {
                         dispatch(setTinGlobal(wheel.tin));
-                        dispatch(
-                          setSelectedWheelDataGlobal({
-                            axle_location: null,
-                            wheel_pos: null,
-                            wheel_id: null,
-                            wheel_tin: null,
-                          }),
-                        );
+                        // dispatch(
+                        //   setSelectedWheelDataGlobal({
+                        //     axle_location: null,
+                        //     wheel_pos: null,
+                        //     wheel_id: null,
+                        //     wheel_tin: null,
+                        //   }),
+                        // );
                       }}>
                       <Text style={styles.text}>PA</Text>
                     </TouchableOpacity>
@@ -560,7 +704,51 @@ const SAxle = props => {
                     // wheel_tin: wheel.wheel_tin,
                   }); // Constructing unique key
                   const isSelected = props.selections[id] || false;
-                  return !props.enableRescan &&
+                  const otherSelected = props.otherSelections[id] || false;
+                  return otherSelected ? (
+                    <TouchableOpacity
+                      key={`${index}-${wheelIndex}`}
+                      style={[
+                        styles.tyre,
+                        {
+                          backgroundColor:
+                            wheel.tin != '' && wheel.tin != null
+                              ? '#4CAF50'
+                              : isSelected
+                              ? '#ffbf00'
+                              : '#ff2800',
+                        },
+                        {
+                          height:
+                            props.selectedButtonRF === wheelIndex &&
+                            selectedWheelDataGlobal.axle_location ===
+                              axle.axle_location
+                              ? 40
+                              : 35,
+                        },
+                        {
+                          width:
+                            props.selectedButtonRF === wheelIndex &&
+                            selectedWheelDataGlobal.axle_location ===
+                              axle.axle_location
+                              ? 60
+                              : 55,
+                        },
+                      ]}
+                      onPress={() => {
+                        dispatch(setTinGlobal(wheel.tin));
+                        // dispatch(
+                        //   setSelectedWheelDataGlobal({
+                        //     axle_location: null,
+                        //     wheel_pos: null,
+                        //     wheel_id: null,
+                        //     wheel_tin: null,
+                        //   }),
+                        // );
+                      }}>
+                      <Text style={styles.text}>RF</Text>
+                    </TouchableOpacity>
+                  ) : !props.enableRescan &&
                     wheel.tin != '' &&
                     wheel.tin != null ? (
                     <TouchableOpacity
@@ -598,14 +786,14 @@ const SAxle = props => {
                       ]}
                       onPress={() => {
                         dispatch(setTinGlobal(wheel.tin));
-                        dispatch(
-                          setSelectedWheelDataGlobal({
-                            axle_location: null,
-                            wheel_pos: null,
-                            wheel_id: null,
-                            wheel_tin: null,
-                          }),
-                        );
+                        // dispatch(
+                        //   setSelectedWheelDataGlobal({
+                        //     axle_location: null,
+                        //     wheel_pos: null,
+                        //     wheel_id: null,
+                        //     wheel_tin: null,
+                        //   }),
+                        // );
                       }}>
                       <Text style={styles.text}>RF</Text>
                     </TouchableOpacity>
@@ -666,7 +854,51 @@ const SAxle = props => {
                     // wheel_tin: wheel.wheel_tin,
                   }); // Constructing unique key
                   const isSelected = props.selections[id] || false;
-                  return !props.enableRescan &&
+                  const otherSelected = props.otherSelections[id] || false;
+                  return otherSelected ? (
+                    <TouchableOpacity
+                      key={`${index}-${wheelIndex}`}
+                      style={[
+                        styles.tyre,
+                        {
+                          backgroundColor:
+                            wheel.tin != '' && wheel.tin != null
+                              ? '#4CAF50'
+                              : isSelected
+                              ? '#ffbf00'
+                              : '#ff2800',
+                        },
+                        {
+                          height:
+                            props.selectedButtonRR === wheelIndex &&
+                            selectedWheelDataGlobal.axle_location ===
+                              axle.axle_location
+                              ? 40
+                              : 35,
+                        },
+                        {
+                          width:
+                            props.selectedButtonRR === wheelIndex &&
+                            selectedWheelDataGlobal.axle_location ===
+                              axle.axle_location
+                              ? 60
+                              : 55,
+                        },
+                      ]}
+                      onPress={() => {
+                        dispatch(setTinGlobal(wheel.tin));
+                        // dispatch(
+                        //   setSelectedWheelDataGlobal({
+                        //     axle_location: null,
+                        //     wheel_pos: null,
+                        //     wheel_id: null,
+                        //     wheel_tin: null,
+                        //   }),
+                        // );
+                      }}>
+                      <Text style={styles.text}>RR</Text>
+                    </TouchableOpacity>
+                  ) : !props.enableRescan &&
                     wheel.tin != '' &&
                     wheel.tin != null ? (
                     <TouchableOpacity
@@ -704,14 +936,14 @@ const SAxle = props => {
                       ]}
                       onPress={() => {
                         dispatch(setTinGlobal(wheel.tin));
-                        dispatch(
-                          setSelectedWheelDataGlobal({
-                            axle_location: null,
-                            wheel_pos: null,
-                            wheel_id: null,
-                            wheel_tin: null,
-                          }),
-                        );
+                        // dispatch(
+                        //   setSelectedWheelDataGlobal({
+                        //     axle_location: null,
+                        //     wheel_pos: null,
+                        //     wheel_id: null,
+                        //     wheel_tin: null,
+                        //   }),
+                        // );
                       }}>
                       <Text style={styles.text}>RR</Text>
                     </TouchableOpacity>
@@ -772,7 +1004,51 @@ const SAxle = props => {
                     // wheel_tin: wheel.wheel_tin,
                   }); // Constructing unique key
                   const isSelected = props.selections[id] || false;
-                  return !props.enableRescan &&
+                  const otherSelected = props.otherSelections[id] || false;
+                  return otherSelected ? (
+                    <TouchableOpacity
+                      key={`${index}-${wheelIndex}`}
+                      style={[
+                        styles.tyre,
+                        {
+                          backgroundColor:
+                            wheel.tin != '' && wheel.tin != null
+                              ? '#4CAF50'
+                              : isSelected
+                              ? '#ffbf00'
+                              : '#ff2800',
+                        },
+                        {
+                          height:
+                            props.selectedButtonTA === wheelIndex &&
+                            selectedWheelDataGlobal.axle_location ===
+                              axle.axle_location
+                              ? 40
+                              : 35,
+                        },
+                        {
+                          width:
+                            props.selectedButtonTA === wheelIndex &&
+                            selectedWheelDataGlobal.axle_location ===
+                              axle.axle_location
+                              ? 60
+                              : 55,
+                        },
+                      ]}
+                      onPress={() => {
+                        dispatch(setTinGlobal(wheel.tin));
+                        // dispatch(
+                        //   setSelectedWheelDataGlobal({
+                        //     axle_location: null,
+                        //     wheel_pos: null,
+                        //     wheel_id: null,
+                        //     wheel_tin: null,
+                        //   }),
+                        // );
+                      }}>
+                      <Text style={styles.text}>TA</Text>
+                    </TouchableOpacity>
+                  ) : !props.enableRescan &&
                     wheel.tin != '' &&
                     wheel.tin != null ? (
                     <TouchableOpacity
@@ -810,14 +1086,14 @@ const SAxle = props => {
                       ]}
                       onPress={() => {
                         dispatch(setTinGlobal(wheel.tin));
-                        dispatch(
-                          setSelectedWheelDataGlobal({
-                            axle_location: null,
-                            wheel_pos: null,
-                            wheel_id: null,
-                            wheel_tin: null,
-                          }),
-                        );
+                        // dispatch(
+                        //   setSelectedWheelDataGlobal({
+                        //     axle_location: null,
+                        //     wheel_pos: null,
+                        //     wheel_id: null,
+                        //     wheel_tin: null,
+                        //   }),
+                        // );
                       }}>
                       <Text style={styles.text}>TA</Text>
                     </TouchableOpacity>
@@ -886,6 +1162,7 @@ const styles = StyleSheet.create({
   },
   text: {
     color: '#fff',
+    // color: 'black',
     transform: [{rotate: '-90deg'}],
   },
 });

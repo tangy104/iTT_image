@@ -60,7 +60,7 @@ const Home = ({navigation, route}) => {
     console.log('password:', route.params.password);
     const fetchUsers = async () => {
       try {
-        const response = await axios.get(`${creden.URI + '/users/'}`, {
+        const response = await axios.get(`${creden.URI + '/all_users/'}`, {
           headers: {
             accept: 'application/json',
           },
@@ -76,7 +76,7 @@ const Home = ({navigation, route}) => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get(`${creden.URI + '/users/'}`, {
+      const response = await axios.get(`${creden.URI + '/all_users/'}`, {
         headers: {
           accept: 'application/json',
         },
@@ -191,7 +191,8 @@ const Home = ({navigation, route}) => {
                 `${creden.URI + '/logout'}?token=${globalToken}`,
               );
               console.log('Logout successful', response.data);
-              navigation.navigate('Login');
+              // navigation.navigate('Login');
+              navigation.navigate('LoginNav', {screen: 'Login'});
             } catch (error) {
               console.error('Error logging out', error);
             }

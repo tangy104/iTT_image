@@ -16,6 +16,7 @@ import {
   ScrollView,
 } from 'react-native';
 import React, {useState, useEffect} from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 
 import {Formik, FieldArray, Field} from 'formik';
@@ -155,8 +156,12 @@ const Addmodel = ({navigation}) => {
                   RTMP_URI: creden.RTMP_URI,
                 }),
               );
+              AsyncStorage.setItem('token', '');
+              AsyncStorage.setItem('ticket', '');
+              AsyncStorage.setItem('isLoggedIn', '');
               console.log('Logout successful', response.data);
-              navigation.navigate('Login');
+              // navigation.navigate('Login');
+              navigation.navigate('LoginNav', {screen: 'Login'});
             } catch (error) {
               console.error('Error logging out', error);
             }

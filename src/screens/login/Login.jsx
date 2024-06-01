@@ -14,6 +14,7 @@ import {
   Modal,
   Platform,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useDispatch, useSelector} from 'react-redux';
 import axios from 'axios';
 import {setTokenGlobal} from '../../state/tokenslice';
@@ -121,11 +122,16 @@ const Login = ({navigation, route}) => {
           RTMP_URI: creden.RTMP_URI,
         }),
       );
+      AsyncStorage.setItem('token', token);
+      AsyncStorage.setItem('isLoggedIn', JSON.stringify(true));
+      AsyncStorage.setItem('ticket', ticketNo);
+      // AsyncStorage.setItem('ticket', ticketNo);
 
       //   console.log('Login successful! token:', token); //look into this as they give different values
       console.log('Login successful! token:', globalToken);
 
-      navigation.navigate('ScanVIN');
+      // navigation.navigate('ScanVIN');
+      navigation.replace('StackNav', {screen: 'ScanVIN'});
       setTicketNo('');
     } catch (error) {
       console.error('Error during login:', error.message);

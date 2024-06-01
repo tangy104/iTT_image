@@ -9,9 +9,12 @@ import {
   ImageBackground,
   Alert,
   Keyboard,
+  BackHandler,
 } from 'react-native';
 import React, {useState, useEffect} from 'react';
+import {useFocusEffect} from '@react-navigation/native';
 import Dialog from 'react-native-dialog';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useSelector, useDispatch} from 'react-redux';
 import {setCreden} from '../../state/credenSlice';
 
@@ -25,14 +28,50 @@ import Profile from '../../utils/images/profile.png';
 import doc from '../../utils/images/doc.png';
 import question from '../../utils/images/question.png';
 
-const Home = ({navigation}) => {
+const StackHome = ({navigation}) => {
   const [ipAddress, setIpAddress] = useState('');
   const [isDialogVisible, setIsDialogVisible] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const dispatch = useDispatch();
   const creden = useSelector(state => state.creden.creden);
   console.log('creden', creden);
+
+  const checkLogin = async () => {
+    const data = await AsyncStorage.getItem('isLoggedIn');
+    console.log('at main home', data);
+    // setIsLoggedIn(data === 'true');
+    setIsLoggedIn(data);
+  };
+
+  useEffect(() => {
+    checkLogin();
+  }, []);
+
+  const handleBackPress = () => {
+    Alert.alert('Exit App', 'Are you sure you want to exit?', [
+      {
+        text: 'Cancel',
+        onPress: () => null,
+        style: 'cancel',
+      },
+      {
+        text: 'Exit',
+        onPress: () => BackHandler.exitApp(),
+      },
+    ]);
+    return true;
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+      return () => {
+        BackHandler.removeEventListener('hardwareBackPress', handleBackPress);
+      };
+    }),
+  );
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
@@ -120,7 +159,9 @@ const Home = ({navigation}) => {
           <TouchableOpacity
             style={styles.getStartedButton}
             onPress={() => {
-              navigation.navigate('Login');
+              // isLoggedIn
+              navigation.navigate('ScanVIN');
+              // : navigation.navigate('Login');
             }}>
             <Text style={styles.text}>Get started</Text>
           </TouchableOpacity>
@@ -166,7 +207,7 @@ const Home = ({navigation}) => {
   );
 };
 
-export default Home;
+export default StackHome;
 
 const styles = StyleSheet.create({
   safeContainer: {

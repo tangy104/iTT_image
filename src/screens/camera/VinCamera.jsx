@@ -11,7 +11,9 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  Keyboard,
 } from 'react-native';
+import {Switch} from 'react-native-switch';
 // import {IconButton, MD3Colors} from 'react-native-paper';
 // import {BarCodeScanner} from 'expo-barcode-scanner';
 import {CameraView, useCameraPermissions, Camera} from 'expo-camera';
@@ -203,6 +205,7 @@ const BarcodeScannerScreen = ({navigation}) => {
   const globalToken = useSelector(state => state.token.tokenGlobal);
   const creden = useSelector(state => state.creden.creden);
   // console.log('globalToken in scanVIN:', globalToken);
+
   const windowWidth = useWindowDimensions().width;
   const windowHeight = useWindowDimensions().height;
 
@@ -218,6 +221,8 @@ const BarcodeScannerScreen = ({navigation}) => {
   const [manualInput1, setManualInput1] = useState('');
   const [manualInput2, setManualInput2] = useState('');
   const [loading, setLoading] = useState(false);
+  const [switchValue, setSwitchValue] = useState(true);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   // if (!permission) {
   //   // Camera permissions are still loading.
@@ -235,6 +240,26 @@ const BarcodeScannerScreen = ({navigation}) => {
   //     </View>
   //   );
   // }
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      () => {
+        setKeyboardVisible(true);
+      },
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        setKeyboardVisible(false);
+      },
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -268,64 +293,125 @@ const BarcodeScannerScreen = ({navigation}) => {
     setLoading(false);
   };
 
+  // const postBarcodeData = async () => {
+  //   let response;
+
+  //   try {
+  //     setLoading(true); // Set loading to true before making the request
+
+  //     // Make a GET request to fetch cars data
+  //     const getCarsResponse = await axios.get(`${creden.URI}/cars/`, {
+  //       params: {
+  //         token: globalToken,
+  //       },
+  //       headers: {
+  //         Accept: 'application/json',
+  //       },
+  //     });
+
+  //     // Check if the VIN number already exists
+  //     const existingCar = getCarsResponse.data.cars.find(
+  //       car => car.vin === barcode1,
+  //     );
+
+  //     if (existingCar) {
+  //       // If the VIN number already exists, extract the ID of the existing entry
+  //       // const existingCarId = existingCar.id;
+  //       const existingCarVIN = existingCar.vin;
+
+  //       // console.log('Existing car ID:', existingCarId);
+
+  //       // Navigate to the "Smodel" screen with the existing car ID
+  //       navigation.replace('NewSmodel', {
+  //         title: 'MHCV Model' + ' ' + existingCarVIN,
+  //         model: existingCar,
+  //         // id: existingCarId,
+  //         vin: existingCarVIN,
+  //       });
+  //     } else {
+  //       // If the VIN number does not exist, perform a POST request to create a new entry
+  //       response = await axios.post(creden.URI + `/cars_w_vin_vc`, null, {
+  //         params: {
+  //           token: globalToken,
+  //           vin: barcode1,
+  //           vc: barcode2,
+  //         },
+  //         headers: {
+  //           Accept: 'application/json',
+  //           // Authorization: "Bearer lemon",
+  //         },
+  //       });
+
+  //       // console.log("response data:", response.data);
+
+  //       navigation.replace('NewSmodel', {
+  //         title: 'MHCV Model' + ' ' + `${response.data.vin}`,
+  //         model: response.data,
+  //         // id: response.data.id,
+  //         vin: response.data.vin,
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching data:', error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const postBarcodeData = async () => {
     let response;
-
     try {
       setLoading(true); // Set loading to true before making the request
-
-      // Make a GET request to fetch cars data
-      const getCarsResponse = await axios.get(`${creden.URI}/cars/`, {
+      // If the VIN number does not exist, perform a POST request to create a new entry
+      response = await axios.post(creden.URI + `/cars_w_vin_vc`, null, {
         params: {
           token: globalToken,
+          vin: barcode1,
+          vc: barcode2,
         },
         headers: {
           Accept: 'application/json',
+          // Authorization: "Bearer lemon",
         },
       });
+      // console.log("response data:", response.data);
 
-      // Check if the VIN number already exists
-      const existingCar = getCarsResponse.data.cars.find(
-        car => car.vin === barcode1,
-      );
+      navigation.replace('NewSmodel', {
+        title: 'MHCV Model' + ' ' + `${response.data.vin}`,
+        model: response.data,
+        // id: response.data.id,
+        vin: response.data.vin,
+      });
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const postManualData = async () => {
+    let response;
+    try {
+      setLoading(true); // Set loading to true before making the request
+      // If the VIN number does not exist, perform a POST request to create a new entry
+      response = await axios.post(creden.URI + `/cars_w_vin_vc`, null, {
+        params: {
+          token: globalToken,
+          vin: manualInput1,
+          vc: manualInput2,
+        },
+        headers: {
+          Accept: 'application/json',
+          // Authorization: "Bearer lemon",
+        },
+      });
+      // console.log("response data:", response.data);
 
-      if (existingCar) {
-        // If the VIN number already exists, extract the ID of the existing entry
-        const existingCarId = existingCar.id;
-        const existingCarVIN = existingCar.vin;
-
-        console.log('Existing car ID:', existingCarId);
-
-        // Navigate to the "Smodel" screen with the existing car ID
-        navigation.replace('NewSmodel', {
-          title: 'MHCV Model' + ' ' + existingCarId,
-          model: existingCar,
-          id: existingCarId,
-          vin: existingCarVIN,
-        });
-      } else {
-        // If the VIN number does not exist, perform a POST request to create a new entry
-        response = await axios.post(creden.URI + `/cars_w_vin_vc`, null, {
-          params: {
-            token: globalToken,
-            vin: barcode1,
-            vc: barcode2,
-          },
-          headers: {
-            Accept: 'application/json',
-            // Authorization: "Bearer lemon",
-          },
-        });
-
-        // console.log("response data:", response.data);
-
-        navigation.navigate('NewSmodel', {
-          title: 'MHCV Model' + ' ' + `${response.data.id}`,
-          model: response.data,
-          id: response.data.id,
-          vin: response.data.vin,
-        });
-      }
+      navigation.replace('NewSmodel', {
+        title: 'MHCV Model' + ' ' + `${response.data.vin}`,
+        model: response.data,
+        // id: response.data.id,
+        vin: response.data.vin,
+      });
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -333,9 +419,82 @@ const BarcodeScannerScreen = ({navigation}) => {
     }
   };
 
+  // const postManualData = async () => {
+  //   let response;
+
+  //   try {
+  //     setLoading(true); // Set loading to true before making the request
+
+  //     // Make a GET request to fetch cars data
+  //     const getCarsResponse = await axios.get(`${creden.URI}/cars/`, {
+  //       params: {
+  //         token: globalToken,
+  //       },
+  //       headers: {
+  //         Accept: 'application/json',
+  //       },
+  //     });
+
+  //     // Check if the VIN number already exists
+  //     const existingCar = getCarsResponse.data.cars.find(
+  //       car => car.vin === manualInput1,
+  //     );
+
+  //     if (existingCar) {
+  //       // If the VIN number already exists, extract the ID of the existing entry
+  //       // const existingCarId = existingCar.id;
+  //       const existingCarVIN = existingCar.vin;
+
+  //       // console.log('Existing car ID:', existingCarId);
+
+  //       // Navigate to the "Smodel" screen with the existing car ID
+  //       navigation.replace('NewSmodel', {
+  //         title: 'MHCV Model' + ' ' + existingCarVIN,
+  //         model: existingCar,
+  //         // id: existingCarId,
+  //         vin: existingCarVIN,
+  //       });
+  //     } else {
+  //       // If the VIN number does not exist, perform a POST request to create a new entry
+  //       response = await axios.post(creden.URI + `/cars_w_vin_vc`, null, {
+  //         params: {
+  //           token: globalToken,
+  //           vin: manualInput1,
+  //           vc: manualInput2,
+  //         },
+  //         headers: {
+  //           Accept: 'application/json',
+  //           // Authorization: "Bearer lemon",
+  //         },
+  //       });
+
+  //       // console.log("response data:", response.data);
+
+  //       navigation.navigate('NewSmodel', {
+  //         title: 'MHCV Model' + ' ' + `${response.data.vin}`,
+  //         model: response.data,
+  //         // id: response.data.id,
+  //         vin: response.data.vin,
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching data:', error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const handlePostData = () => {
     if (barcode1 && barcode2) {
       postBarcodeData();
+    }
+  };
+
+  const handleManualPostData = () => {
+    if (manualInput1 && manualInput2) {
+      postManualData();
+    } else {
+      Alert.alert('Alert', 'Please enter the VIN and VC details');
     }
   };
 
@@ -445,7 +604,8 @@ const BarcodeScannerScreen = ({navigation}) => {
                 }),
               );
               console.log('Logout successful', response.data);
-              navigation.navigate('Login');
+              // navigation.navigate('Login');
+              navigation.navigate('LoginNav', {screen: 'Login'});
             } catch (error) {
               console.error('Error logging out', error);
             }
@@ -466,145 +626,182 @@ const BarcodeScannerScreen = ({navigation}) => {
         tabLeftFunc={() => navigation.navigate('Profile')}
         tabRightFunc={() => navigation.navigate('AboutApp')}
       />
-      <View style={[styles.scannerContainer]}>
-        <CameraView
-          onBarcodeScanned={handleBarCodeScanned}
-          barcodeScannerSettings={{
-            barcodeTypes: [
-              'aztec',
-              'ean13',
-              'ean8',
-              'qr',
-              'pdf417',
-              'upc_e',
-              'datamatrix',
-              'code39',
-              'code93',
-              'itf14',
-              'codabar',
-              'code128',
-              'upc_a',
-            ],
-          }}
-          style={[
-            StyleSheet.absoluteFillObject,
-            {borderWidth: 2, borderColor: 'black'},
-          ]}
-
-          // style={{height: "50%", width: "100%"}}
+      <View style={{position: 'absolute', zIndex: 1, top: 29, right: 25}}>
+        <Switch
+          value={switchValue}
+          onValueChange={() => setSwitchValue(!switchValue)}
+          activeText="Scan"
+          inActiveText="Manual"
+          circleSize={30}
+          switchRightPx={5}
+          // backgroundActive=''
+          // backgroundInactive=''
+          switchWidthMultiplier={3}
         />
-
-        <View
-          style={[
-            styles.frame,
-            {
-              width: frameWidth,
-              height: frameHeight,
-            },
-          ]}></View>
-        {loading && (
-          <ActivityIndicator
-            size="large"
-            color="#31367b"
-            style={styles.loadingIndicator}
-          />
-        )}
       </View>
-      {/* {renderScanButton()} */}
+      {switchValue ? (
+        <View style={{flex: 1, alignItems: 'center'}}>
+          <View style={[styles.scannerContainer]}>
+            <CameraView
+              onBarcodeScanned={handleBarCodeScanned}
+              barcodeScannerSettings={{
+                barcodeTypes: [
+                  'aztec',
+                  'ean13',
+                  'ean8',
+                  'qr',
+                  'pdf417',
+                  'upc_e',
+                  'datamatrix',
+                  'code39',
+                  'code93',
+                  'itf14',
+                  'codabar',
+                  'code128',
+                  'upc_a',
+                ],
+              }}
+              style={[
+                StyleSheet.absoluteFillObject,
+                {borderWidth: 2, borderColor: 'black'},
+              ]}
 
-      <View style={styles.inputContainer}>
-        <View
-          style={{
-            margin: 20,
-            marginBottom: 0,
-            flexDirection: 'row',
-            justifyContent: 'space-evenly',
-            width: '80%',
-            height: 40,
-            borderRadius: 12,
-            borderWidth: 1.5,
-            borderColor: '#3758ff',
-            //   justifyContent: "center",
-            alignItems: 'center',
-            //   zIndex: 2,
-          }}>
-          <Image
-            source={barcode}
-            style={{
-              resizeMode: 'contain',
-              height: 28,
-              width: 28,
-              right: 20,
-            }}></Image>
-          <View>
-            {barcode1 ? (
-              <Text
-                style={{
-                  height: 40,
-                  width: 180,
-                  right: 40,
-                  fontSize: 15,
-                  top: 10,
-                  color: 'black',
-                }}>
-                {barcode1}
-              </Text>
-            ) : (
-              <TextInput
-                placeholder="VIN no."
-                placeholderTextColor="grey"
-                style={{height: 40, width: 180, right: 40, fontSize: 15}}
+              // style={{height: "50%", width: "100%"}}
+            />
+
+            <View
+              style={[
+                styles.frame,
+                {
+                  width: frameWidth,
+                  height: frameHeight,
+                },
+              ]}></View>
+            {loading && (
+              <ActivityIndicator
+                size="large"
+                color="#31367b"
+                style={styles.loadingIndicator}
               />
             )}
           </View>
-        </View>
-        <View
-          style={{
-            margin: 20,
-            marginBottom: 5,
-            marginTop: 6,
-            flexDirection: 'row',
-            justifyContent: 'space-evenly',
-            width: '80%',
-            height: 40,
-            borderRadius: 12,
-            borderWidth: 1.5,
-            borderColor: '#3758ff',
-            //   justifyContent: "center",
-            alignItems: 'center',
-            //   zIndex: 2,
-          }}>
-          <Image
-            source={barcode}
-            style={{
-              resizeMode: 'contain',
-              height: 28,
-              width: 28,
-              right: 20,
-            }}></Image>
-          <View>
-            {barcode2 ? (
-              <Text
+          {/* {renderScanButton()} */}
+
+          <View style={[styles.inputContainer, {width: windowWidth}]}>
+            <View
+              style={{
+                margin: 20,
+                marginBottom: 0,
+                flexDirection: 'row',
+                justifyContent: 'space-evenly',
+                width: '80%',
+                height: 40,
+                borderRadius: 12,
+                borderWidth: 1.5,
+                borderColor: '#3758ff',
+                //   justifyContent: "center",
+                alignItems: 'center',
+                //   zIndex: 2,
+              }}>
+              <Image
+                source={barcode}
                 style={{
-                  height: 40,
-                  width: 180,
-                  right: 40,
-                  fontSize: 15,
-                  top: 10,
-                  color: 'black',
-                }}>
-                {barcode2}
-              </Text>
-            ) : (
-              <TextInput
-                placeholder="VC no."
-                placeholderTextColor="grey"
-                style={{height: 40, width: 180, right: 40, fontSize: 15}}
-              />
-            )}
-          </View>
-        </View>
-        {/* <View style={styles.inputbar}>
+                  resizeMode: 'contain',
+                  height: 28,
+                  width: 28,
+                  right: 20,
+                }}></Image>
+              <View>
+                {barcode1 ? (
+                  <Text
+                    style={{
+                      height: 40,
+                      width: 180,
+                      right: 40,
+                      fontSize: 15,
+                      top: 10,
+                      color: 'black',
+                    }}>
+                    {barcode1}
+                  </Text>
+                ) : (
+                  // <TextInput
+                  //   placeholder="VIN no."
+                  //   placeholderTextColor="grey"
+                  //   style={{height: 40, width: 180, right: 40, fontSize: 15}}
+                  // />
+                  <Text
+                    style={{
+                      height: 40,
+                      width: 180,
+                      right: 40,
+                      fontSize: 15,
+                      top: 10,
+                      color: 'grey',
+                    }}>
+                    VIN no.
+                  </Text>
+                )}
+              </View>
+            </View>
+            <View
+              style={{
+                margin: 20,
+                marginBottom: 5,
+                marginTop: 6,
+                flexDirection: 'row',
+                justifyContent: 'space-evenly',
+                width: '80%',
+                height: 40,
+                borderRadius: 12,
+                borderWidth: 1.5,
+                borderColor: '#3758ff',
+                //   justifyContent: "center",
+                alignItems: 'center',
+                //   zIndex: 2,
+              }}>
+              <Image
+                source={barcode}
+                style={{
+                  resizeMode: 'contain',
+                  height: 28,
+                  width: 28,
+                  right: 20,
+                }}></Image>
+              <View>
+                {barcode2 ? (
+                  <Text
+                    style={{
+                      height: 40,
+                      width: 180,
+                      right: 40,
+                      fontSize: 15,
+                      top: 10,
+                      color: 'black',
+                    }}>
+                    {barcode2}
+                  </Text>
+                ) : (
+                  // <TextInput
+                  //   placeholder="VC no."
+                  //   placeholderTextColor="grey"
+                  //   style={{height: 40, width: 180, right: 40, fontSize: 15}}
+                  // />
+                  <Text
+                    style={{
+                      height: 40,
+                      width: 180,
+                      right: 40,
+                      fontSize: 15,
+                      top: 10,
+                      color: 'grey',
+                    }}>
+                    VC no.
+                  </Text>
+                )}
+              </View>
+            </View>
+            {/* <View style={styles.inputbar}>
           <TextInput
             style={styles.input}
             placeholder={barcode1 ? barcode1 : "VIN no."}
@@ -625,16 +822,135 @@ const BarcodeScannerScreen = ({navigation}) => {
           />
         </View> */}
 
-        {renderScanButton()}
-        {renderPostButton()}
-      </View>
-      <Tabs
-        left={dash}
-        center={logoKGP2}
-        right={logout}
-        tabLeftFunc={() => navigation.navigate('Dashboard')}
-        tabRightFunc={handleLogout}
-      />
+            {renderScanButton()}
+            {renderPostButton()}
+          </View>
+        </View>
+      ) : (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: '#f2f2f2',
+            width: windowWidth,
+          }}>
+          <Text
+            style={{
+              fontSize: 17,
+              color: '#7f7f7f',
+              textAlign: 'center',
+              // top: 10,
+              bottom: 30,
+            }}>
+            Enter the of VIN and VC details of the vehicle
+          </Text>
+          <View
+            style={{
+              margin: 20,
+              flexDirection: 'row',
+              justifyContent: 'space-evenly',
+              width: '80%',
+              height: 40,
+              borderRadius: 12,
+              borderWidth: 1.5,
+              borderColor: '#3758ff',
+              //   justifyContent: "center",
+              alignItems: 'center',
+              //   zIndex: 2,
+            }}>
+            <Image
+              source={barcode}
+              style={{
+                resizeMode: 'contain',
+                height: 28,
+                width: 28,
+                right: 20,
+              }}></Image>
+            <View>
+              <TextInput
+                style={{
+                  height: 40,
+                  width: 180,
+                  right: 40,
+                  fontSize: 15,
+                  color: 'black',
+                }}
+                placeholder="VIN no."
+                value={manualInput1}
+                // keyboardType="numeric"
+                placeholderTextColor="grey"
+                onChangeText={text => setManualInput1(text)}
+              />
+            </View>
+          </View>
+          <View
+            style={{
+              margin: 20,
+              marginTop: 6,
+              flexDirection: 'row',
+              justifyContent: 'space-evenly',
+              width: '80%',
+              height: 40,
+              borderRadius: 12,
+              borderWidth: 1.5,
+              borderColor: '#3758ff',
+              //   justifyContent: "center",
+              alignItems: 'center',
+              //   zIndex: 2,
+            }}>
+            <Image
+              source={barcode}
+              style={{
+                resizeMode: 'contain',
+                height: 28,
+                width: 28,
+                right: 20,
+              }}></Image>
+            <View>
+              <TextInput
+                style={{
+                  height: 40,
+                  width: 180,
+                  right: 40,
+                  fontSize: 15,
+                  color: 'black',
+                }}
+                placeholder="VC no."
+                value={manualInput2}
+                // keyboardType="numeric"
+                placeholderTextColor="grey"
+                onChangeText={text => setManualInput2(text)}
+              />
+            </View>
+          </View>
+          <TouchableOpacity
+            style={{
+              width: 220,
+              height: 40,
+              top: 40,
+              borderRadius: 12,
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 2,
+              backgroundColor: '#3758ff',
+            }}
+            onPress={handleManualPostData}>
+            <Text style={{color: '#fff', fontSize: 17, fontWeight: 'bold'}}>
+              Proceed
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      {!keyboardVisible && (
+        <Tabs
+          left={dash}
+          center={logoKGP2}
+          right={logout}
+          tabLeftFunc={() => navigation.navigate('Dashboard')}
+          tabRightFunc={handleLogout}
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -676,9 +992,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   inputContainer: {
+    // flex: 1,
     alignItems: 'center',
-    width: '100%',
+
+    // width: '100%',
     backgroundColor: '#f2f2f2',
+    // backgroundColor: 'pink',
     bottom: 50,
   },
   input: {

@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 
 import React, {useState, useEffect, useRef} from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {BackHandler} from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import {useSelector, useDispatch} from 'react-redux';
@@ -222,6 +223,8 @@ const Smodel = ({navigation, route}) => {
   const globalToken = useSelector(state => state.token.tokenGlobal);
   const creden = useSelector(state => state.creden.creden);
 
+  console.log('creden from Smodel', creden);
+
   console.log('redux', alert);
   // console.log("Global token in Smodel:", globalToken);
   const [data, setData] = useState([]);
@@ -275,7 +278,7 @@ const Smodel = ({navigation, route}) => {
     try {
       setLoading(true); // Set loading to true before making the request
       const response = await axios.get(
-        creden.URI + `/cars/${route.params.id}`,
+        creden.URI + `/cars/${route.params.vin}`,
         {
           params: {
             token: globalToken,
@@ -294,7 +297,7 @@ const Smodel = ({navigation, route}) => {
       // console.log("response data:", response.data.axles_data[0]);
       // console.log("response data:", response.data);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching data from smodel:', error);
     } finally {
       setLoading(false); // Set loading to false after the request completes (whether successful or not)
     }
@@ -329,12 +332,12 @@ const Smodel = ({navigation, route}) => {
   }, []);
 
   useEffect(() => {
-    console.log('params', route.params.id);
+    console.log('params', route.params.vin);
     const fetchData = async () => {
       try {
         setLoading(true); // Set loading to true before making the request
         const response = await axios.get(
-          creden.URI + `/cars/${route.params.id}`,
+          creden.URI + `/cars/${route.params.vin}`,
           {
             params: {
               token: globalToken,
@@ -353,7 +356,7 @@ const Smodel = ({navigation, route}) => {
         // console.log("response data:", response.data.axles_data[0]);
         // console.log("response data:", response.data);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching data from Smodel:', error);
       } finally {
         setLoading(false); // Set loading to false after the request completes (whether successful or not)
       }
@@ -463,8 +466,12 @@ const Smodel = ({navigation, route}) => {
                   RTMP_URI: creden.RTMP_URI,
                 }),
               );
+              AsyncStorage.setItem('token', '');
+              AsyncStorage.setItem('ticket', '');
+              AsyncStorage.setItem('isLoggedIn', '');
               console.log('Logout successful', response.data);
-              navigation.navigate('Login');
+              // navigation.navigate('Login');
+              navigation.navigate('LoginNav', {screen: 'Login'});
             } catch (error) {
               console.error('Error logging out', error);
             }
@@ -501,7 +508,7 @@ const Smodel = ({navigation, route}) => {
             params: {
               token: globalToken,
               data: manualTIN,
-              id: route.params.id,
+              // id: route.params.id,
               vin: apiResponseData.vin,
               axle_location: selectedWheelData.axle_location,
               // axle_id: selectedWheelData.axle_id,
@@ -554,7 +561,7 @@ const Smodel = ({navigation, route}) => {
           enableRescan={enableRescan}
           // elapsedTime={route.params.elapsedTime}
           fromCameraScreen={route.params.fromCameraScreen ? true : false}
-          id={route.params.id}
+          // id={route.params.id}
           vin={route.params.vin}
         />
         <View
@@ -756,7 +763,7 @@ const Smodel = ({navigation, route}) => {
                             // Navigate to tyre scan screen
                             navigation.navigate('CameraScreen', {
                               model: apiResponseData,
-                              id: route.params.id,
+                              // id: route.params.id,
                               vin: apiResponseData.vin,
                             });
                           }, 500);
@@ -782,7 +789,7 @@ const Smodel = ({navigation, route}) => {
                     // Navigate to tyre scan screen
                     navigation.navigate('CameraScreen', {
                       model: apiResponseData,
-                      id: route.params.id,
+                      // id: route.params.id,
                       vin: apiResponseData.vin,
                     });
                   }, 600);
@@ -815,7 +822,7 @@ const Smodel = ({navigation, route}) => {
                                   // Navigate to tyre scan screen
                                   navigation.navigate('CameraScreen', {
                                     model: apiResponseData,
-                                    id: route.params.id,
+                                    // id: route.params.id,
                                     vin: apiResponseData.vin,
                                   });
                                   handleFailedAttempt();
@@ -837,7 +844,7 @@ const Smodel = ({navigation, route}) => {
                         } else {
                           navigation.navigate('CameraScreen', {
                             model: apiResponseData,
-                            id: route.params.id,
+                            // id: route.params.id,
                             vin: apiResponseData.vin,
                           });
                           handleFailedAttempt();
