@@ -383,7 +383,43 @@ const BarcodeScannerScreen = ({navigation}) => {
         vin: response.data.vin,
       });
     } catch (error) {
-      console.error('Error fetching data:', error);
+      // Handle the error response
+      if (error.response && error.response.status === 403) {
+        console.error(error.response.data.detail);
+        async () => {
+          try {
+            const response = await axios.post(
+              `${creden.URI + '/logout'}?token=${globalToken}`,
+            );
+            dispatch(
+              setCreden({
+                ticket: null,
+                URI: creden.URI,
+                WS_URI: creden.WS_URI,
+                RTMP_URI: creden.RTMP_URI,
+              }),
+            );
+            console.log('Logout successful', response.data);
+          } catch (error) {
+            console.error('Error logging out', error);
+          }
+        },
+          // Show an alert and navigate to the login page
+          Alert.alert(
+            'Invalid Credentials',
+            'Your shift has ended. Please log in again to continue.',
+            [
+              {
+                text: 'OK',
+                onPress: () =>
+                  navigation.navigate('LoginNav', {screen: 'Login'}), // Navigate to the login page
+              },
+            ],
+            {cancelable: false},
+          );
+      } else {
+        console.error('Error fetching data:', error);
+      }
     } finally {
       setLoading(false);
     }
@@ -413,7 +449,43 @@ const BarcodeScannerScreen = ({navigation}) => {
         vin: response.data.vin,
       });
     } catch (error) {
-      console.error('Error fetching data:', error);
+      // Handle the error response
+      if (error.response && error.response.status === 403) {
+        console.error(error.response.data.detail);
+        async () => {
+          try {
+            const response = await axios.post(
+              `${creden.URI + '/logout'}?token=${globalToken}`,
+            );
+            dispatch(
+              setCreden({
+                ticket: null,
+                URI: creden.URI,
+                WS_URI: creden.WS_URI,
+                RTMP_URI: creden.RTMP_URI,
+              }),
+            );
+            console.log('Logout successful', response.data);
+          } catch (error) {
+            console.error('Error logging out', error);
+          }
+        },
+          // Show an alert and navigate to the login page
+          Alert.alert(
+            'Invalid Credentials',
+            'Your shift has ended. Please log in again to continue.',
+            [
+              {
+                text: 'OK',
+                onPress: () =>
+                  navigation.navigate('LoginNav', {screen: 'Login'}), // Navigate to the login page
+              },
+            ],
+            {cancelable: false},
+          );
+      } else {
+        console.error('Error fetching data:', error);
+      }
     } finally {
       setLoading(false);
     }

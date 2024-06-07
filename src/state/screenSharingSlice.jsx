@@ -58,7 +58,7 @@ export const {
 } = screenSharingSlice.actions;
 
 export const connectWebSocket = () => dispatch => {
-  webSocketService = new WebSocketService('ws://192.168.255.171:8080');
+  webSocketService = new WebSocketService('ws://192.168.153.171:8080');
 
   webSocketService.connect(
     () => dispatch(webSocketOpened()),
@@ -87,7 +87,7 @@ export const startScreenCapture = () => (dispatch, getState) => {
             });
         })
         .catch(error => console.error('Error capturing screen:', error));
-    }, 1000 / 3);
+    }, 1000 / 1);
     dispatch(startCapture(intervalId));
   }
 };

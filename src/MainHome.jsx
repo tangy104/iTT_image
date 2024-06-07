@@ -75,13 +75,13 @@ const MainHome = () => {
   const {isCapturing, isConnected} = useSelector(state => state.screenSharing);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // useEffect(() => {
-  //   dispatch(connectWebSocket());
+  useEffect(() => {
+    dispatch(connectWebSocket());
 
-  //   return () => {
-  //     dispatch(stopScreenCapture());
-  //   };
-  // }, [dispatch]);
+    return () => {
+      dispatch(stopScreenCapture());
+    };
+  }, [dispatch]);
 
   const handleStartCapture = () => {
     dispatch(startScreenCapture());
@@ -133,7 +133,7 @@ const MainHome = () => {
         <Stack.Screen name="CameraScreen2" component={CameraScreen2} />
         <Stack.Screen name="ScreenSharing" component={ScreenSharing} />
       </Stack.Navigator> */}
-      {/* <View
+      <View
         style={{
           height: 50,
           width: 100,
@@ -146,7 +146,7 @@ const MainHome = () => {
           onPress={isCapturing ? handleStopCapture : handleStartCapture}
           disabled={!isConnected}
         />
-      </View> */}
+      </View>
     </NavigationContainer>
   );
 };

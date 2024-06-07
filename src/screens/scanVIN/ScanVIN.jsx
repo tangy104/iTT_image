@@ -123,7 +123,7 @@ const ScanVIN = ({navigation}) => {
       // Check if email and password are provided
       if (!values.email || !values.password) {
         // Show an alert if either email or password is missing
-        alert('Please enter both email and password.');
+        Alert.alert('Please enter both email and password.');
         return;
       }
       // Serialize the values object to plain JavaScript object
@@ -165,10 +165,10 @@ const ScanVIN = ({navigation}) => {
       console.error('Error during login:', error.message);
       // Check if the error is due to invalid credentials (unauthorized)
       if (error.response && error.response.status === 401) {
-        alert('Invalid username or password. Please try again.');
+        Alert.alert('Invalid username or password. Please try again.');
       } else {
         // Handle other types of errors as needed
-        alert('Invalid credentials. Please try again.');
+        Alert.alert('Invalid credentials. Please try again.');
       }
       // Handle the error as needed (e.g., show an error message to the user)
     }
