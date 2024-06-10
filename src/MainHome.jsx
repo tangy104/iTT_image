@@ -1,7 +1,8 @@
 import React, {useState, useEffect} from 'react';
-import {View, Button} from 'react-native';
+import {View, Button, Text} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import DeviceInfo from 'react-native-device-info';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useDispatch, useSelector} from 'react-redux';
 import {
@@ -74,6 +75,17 @@ const MainHome = () => {
   const dispatch = useDispatch();
   const {isCapturing, isConnected} = useSelector(state => state.screenSharing);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [deviceId, setDeviceId] = useState('');
+
+  useEffect(() => {
+    const fetchDeviceId = async () => {
+      const id = await DeviceInfo.getAndroidId();
+      setDeviceId(id);
+      console.log('deviceId=', deviceId);
+    };
+
+    fetchDeviceId();
+  }, []);
 
   useEffect(() => {
     dispatch(connectWebSocket());
@@ -84,7 +96,11 @@ const MainHome = () => {
   }, [dispatch]);
 
   const handleStartCapture = () => {
-    dispatch(startScreenCapture());
+    if (deviceId === 'f80b60565be51cba') {
+      dispatch(startScreenCapture('device1', '123456'));
+    } else {
+      dispatch(startScreenCapture('device2', '789456'));
+    }
   };
 
   const handleStopCapture = () => {
@@ -141,6 +157,7 @@ const MainHome = () => {
           right: 20,
           top: 20,
         }}>
+        {/* <Text>{deviceId}</Text> */}
         <Button
           title={isCapturing ? 'Stop Mirroring' : 'Start Mirroring'}
           onPress={isCapturing ? handleStopCapture : handleStartCapture}
