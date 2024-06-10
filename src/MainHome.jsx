@@ -3,6 +3,7 @@ import {View, Button, Text} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import DeviceInfo from 'react-native-device-info';
+import SplashScreen from 'react-native-splash-screen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useDispatch, useSelector} from 'react-redux';
 import {
@@ -117,9 +118,15 @@ const MainHome = () => {
   useEffect(() => {
     checkLogin();
   }, []);
+  // useEffect(() => {
+  //   SplashScreen.hide();
+  // }, []);
 
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      onReady={() => {
+        SplashScreen.hide();
+      }}>
       {isLoggedIn ? <StackNav /> : <LoginNav />}
 
       {/* <RootStack.Navigator>

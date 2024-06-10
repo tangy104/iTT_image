@@ -1,6 +1,7 @@
 package com.itt
 import expo.modules.ReactActivityDelegateWrapper
 
+import org.devio.rn.splashscreen.SplashScreen; 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
@@ -23,7 +24,10 @@ class MainActivity : ReactActivity() {
   override fun createReactActivityDelegate(): ReactActivityDelegate =
       ReactActivityDelegateWrapper(this, BuildConfig.IS_NEW_ARCHITECTURE_ENABLED, DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled))
 
+  
+
   override fun onCreate(savedInstanceState: Bundle?) {
+    SplashScreen.show(this)  // here
     super.onCreate(null)
   }
 }
