@@ -38,6 +38,7 @@ const LoginNav = () => {
       screenOptions={{headerShown: false}}>
       <Stack.Screen name="LogInHome" component={LogInHome} />
       <Stack.Screen name="Login" component={Login} />
+      <Stack.Screen name="AdminScreen" component={AdminScreen} />
       <Stack.Screen name="StackNav" component={StackNav} />
     </Stack.Navigator>
   );
@@ -88,13 +89,13 @@ const MainHome = () => {
     fetchDeviceId();
   }, []);
 
-  useEffect(() => {
-    dispatch(connectWebSocket());
+  // useEffect(() => {
+  //   dispatch(connectWebSocket());
 
-    return () => {
-      dispatch(stopScreenCapture());
-    };
-  }, [dispatch]);
+  //   return () => {
+  //     dispatch(stopScreenCapture());
+  //   };
+  // }, [dispatch]);
 
   const handleStartCapture = () => {
     if (deviceId === 'f80b60565be51cba') {
@@ -118,9 +119,6 @@ const MainHome = () => {
   useEffect(() => {
     checkLogin();
   }, []);
-  // useEffect(() => {
-  //   SplashScreen.hide();
-  // }, []);
 
   return (
     <NavigationContainer
@@ -156,7 +154,7 @@ const MainHome = () => {
         <Stack.Screen name="CameraScreen2" component={CameraScreen2} />
         <Stack.Screen name="ScreenSharing" component={ScreenSharing} />
       </Stack.Navigator> */}
-      <View
+      {/* <View
         style={{
           height: 50,
           width: 100,
@@ -164,13 +162,13 @@ const MainHome = () => {
           right: 20,
           top: 20,
         }}>
-        {/* <Text>{deviceId}</Text> */}
+        <Text>{deviceId}</Text>
         <Button
           title={isCapturing ? 'Stop Mirroring' : 'Start Mirroring'}
           onPress={isCapturing ? handleStopCapture : handleStartCapture}
           disabled={!isConnected}
         />
-      </View>
+      </View> */}
     </NavigationContainer>
   );
 };

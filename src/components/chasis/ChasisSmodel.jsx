@@ -7,6 +7,7 @@ import {setTinGlobal} from '../../state/tinslice';
 import {setCreden} from '../../state/credenSlice';
 
 import chassis from '../../utils/images/chassis.jpg';
+import chassis2 from '../../utils/images/chassis2.png';
 
 // import STyre from './STyre';
 import SAxle from './SAxle';
@@ -368,32 +369,51 @@ const Chasis = props => {
     };
 
     newWs.onmessage = e => {
-      console.log('Message received:', e.data);
+      console.log('Message received from chassis:', e.data);
+
+      // Ensure that e.data is parsed as JSON if it's a JSON string
+      let parsedData;
       try {
-        const outerMessage = JSON.parse(e.data); // Parse the outer message
-        console.log('Outer message:', outerMessage);
-        // Check if outerMessage.message is a valid JSON string
-        const innerMessage = JSON.parse(outerMessage.message);
-        console.log('inner message', innerMessage);
-        const {id, selected} = innerMessage;
-
-        setSelections(prevSelections => ({
-          ...prevSelections,
-          [id]: selected,
-        }));
-        setOtherSelections(prevSelections => {
-          // Create a new object based on previous selections
-          const updatedSelections = {...prevSelections, [id]: selected};
-
-          // Set the key for your selected wheel to false, if it exists
-          if (selectedWheelDataKey != null) {
-            updatedSelections[selectedWheelDataKey] = false;
-          }
-
-          return updatedSelections;
-        });
+        parsedData = JSON.parse(e.data);
+        console.log('parsed', parsedData);
       } catch (error) {
-        console.log('Failed to parse message:', error);
+        console.error('Failed to parse e.data as JSON:', error);
+        return;
+      }
+
+      // Check if the parsed data contains an alert field
+      if (parsedData.alert === 'DB_UPDATED') {
+        props.fetchChassisData(); // Corrected function call
+        console.log('DB_UPDATED in Smodel');
+      } else {
+        try {
+          // Assuming outerMessage is already parsed into parsedData
+          const outerMessage = parsedData;
+
+          // Check if outerMessage.message is a valid JSON string
+          const innerMessage = JSON.parse(outerMessage.message);
+          const {id, selected} = innerMessage;
+
+          // Update the selections
+          setSelections(prevSelections => ({
+            ...prevSelections,
+            [id]: selected,
+          }));
+
+          // Update other selections with specific logic
+          setOtherSelections(prevSelections => {
+            const updatedSelections = {...prevSelections, [id]: selected};
+
+            // Set the key for the selected wheel to false if it exists
+            if (selectedWheelDataKey != null) {
+              updatedSelections[selectedWheelDataKey] = false;
+            }
+
+            return updatedSelections;
+          });
+        } catch (error) {
+          console.error('Failed to parse outerMessage.message:', error);
+        }
       }
     };
 
@@ -614,9 +634,39 @@ const Chasis = props => {
         style={{
           flexDirection: 'row',
           justifyContent: 'space-between',
-          width: 300,
+          width: 364,
           height: 150,
+          // backgroundColor: 'red',
         }}>
+        <Text
+          style={{
+            color: 'black',
+            transform: [{rotate: '-90deg'}],
+            left: 110,
+            fontWeight: 'bold',
+          }}>
+          FRONT
+        </Text>
+        <Image
+          source={chassis2}
+          style={{
+            resizeMode: 'contain',
+            transform: [{rotate: '-90deg'}],
+            bottom: 15,
+            // width: 300,
+            left: 30,
+            height: 180,
+          }}
+        />
+        <Text
+          style={{
+            color: 'black',
+            transform: [{rotate: '-90deg'}],
+            left: 80,
+            fontWeight: 'bold',
+          }}>
+          BACK
+        </Text>
         {carWithWheelsS.axles_data.map(spareAxle => (
           <View
             key={spareAxle.axle_location}
@@ -786,17 +836,6 @@ const Chasis = props => {
             })}
           </View>
         ))}
-
-        <Image
-          source={chassis}
-          style={{
-            resizeMode: 'contain',
-            transform: [{rotate: '-90deg'}],
-            bottom: 15,
-            // width: 300,
-            height: 180,
-          }}
-        />
       </View>
 
       {/* <View style={styles.rectangle}>

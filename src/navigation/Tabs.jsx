@@ -84,7 +84,8 @@ const Tabs = props => {
           justifyContent: 'space-evenly',
           height: 70,
           width: '100%',
-          backgroundColor: '#31367b',
+          // backgroundColor: '#31367b',
+          backgroundColor: '#0f113e',
           borderTopLeftRadius: 40,
           borderTopRightRadius: 40,
           zIndex: 2,
@@ -112,8 +113,13 @@ const Tabs = props => {
           onPress={() => {
             if (currentScreenName === 'LogInHome') {
               navigation.navigate('Login');
+            } else if (
+              currentScreenName === 'Login' ||
+              currentScreenName === 'Profile'
+            ) {
+              // openLinkInWebView();
             } else {
-              openLinkInWebView();
+              // openLinkInWebView();
             }
           }}>
           <Image

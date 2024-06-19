@@ -25,13 +25,16 @@ import Tabs from '../../navigation/Tabs';
 
 // Import your images
 import backgroundImage from '../../utils/images/backgroundImage.png';
+import backgroundImage2 from '../../utils/images/backgroundImage2.png';
 import logoTATA from '../../utils/images/logoTATA.png';
 import logoApp from '../../utils/images/logoApp.png';
 import logoKGP2 from '../../utils/images/logoKGP2.png';
+import logoKGP3 from '../../utils/images/logoKGP3.png';
 import id from '../../utils/images/id.png';
 import doc from '../../utils/images/doc.png';
 import question from '../../utils/images/question.png';
 import admin from '../../utils/images/admin.png';
+import iTTText from '../../utils/images/iTTText.png';
 
 const Login = ({navigation, route}) => {
   const [ticketNo, setTicketNo] = useState('');
@@ -161,10 +164,11 @@ const Login = ({navigation, route}) => {
           contentContainerStyle={styles.scrollContainer}
           keyboardShouldPersistTaps="handled">
           <ImageBackground
-            source={backgroundImage}
+            source={backgroundImage2}
             style={[
               styles.backgroundImage,
-              {height: keyboardVisible ? '85%' : '80%'},
+              {height: keyboardVisible ? '90%' : '77%'},
+              {top: keyboardVisible ? -10 : 0},
             ]}>
             <View
               style={[styles.logoContainer, {top: keyboardVisible ? 20 : 0}]}>
@@ -188,13 +192,17 @@ const Login = ({navigation, route}) => {
                 </TouchableOpacity>
               </View>
 
-              <Text style={styles.logoText}>TATA MOTORS LTD.</Text>
+              {/* <Text style={styles.logoText}>TATA MOTORS LTD.</Text> */}
               <Image source={logoApp} style={styles.logoApp} />
-              <Text style={styles.subtitleText}>Intelligent Tyre Tracer</Text>
-              <Text style={styles.welcomeText}>Welcome to iTT</Text>
-              <Text style={styles.infoText}>
+              {/* <Text style={styles.subtitleText}>Intelligent Tyre Tracer</Text> */}
+              {/* <Text style={styles.welcomeText}>Welcome to iTT</Text> */}
+              {/* <Text style={styles.infoText}>
                 AI-based Tyre Specification Reading and Downstream Analytics
-              </Text>
+              </Text> */}
+              <Image
+                source={iTTText}
+                style={{resizeMode: 'contain', width: 250, top: 30}}
+              />
             </View>
             <View style={styles.inputContainer}>
               <Image
@@ -220,11 +228,11 @@ const Login = ({navigation, route}) => {
       {!keyboardVisible && (
         <Tabs
           // style={{position: "absolute", bottom: 0}}
-          left={doc}
+          // left={doc}
           center={logoKGP2}
-          right={question}
-          tabLeftFunc={BottomTabLeftFunc}
-          tabRightFunc={BottomTabRightFunc}
+          right={doc}
+          // tabLeftFunc={BottomTabLeftFunc}
+          // tabRightFunc={BottomTabLeftFunc}
         />
       )}
       <Modal
@@ -342,17 +350,20 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '80%',
     resizeMode: 'contain',
-    justifyContent: 'center',
+    // justifyContent: 'center',
     alignItems: 'center',
   },
   logoContainer: {
     alignItems: 'center',
     marginBottom: 40,
+    // backgroundColor: 'red',
+    marginTop: 30,
   },
+  // style={{resizeMode: 'contain', width: 140, height: 120, top: 75}}
   logoTATA: {
     resizeMode: 'contain',
-    width: 80,
-    height: 50,
+    width: 95,
+    height: 65,
     alignSelf: 'center',
     // justifyContent: "center",
     // left:"75%"
@@ -368,6 +379,7 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     width: 140,
     height: 120,
+    top: 60,
   },
   subtitleText: {
     color: '#fff',
@@ -394,11 +406,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
     borderWidth: 1.5,
-    borderColor: '#3758ff',
+    // borderColor: '#3758ff',
+    borderColor: '#0f113e',
     borderRadius: 12,
     paddingHorizontal: 10,
     backgroundColor: 'white',
-    top: 40,
+    top: 90,
   },
   input: {
     flex: 1,
@@ -410,10 +423,11 @@ const styles = StyleSheet.create({
     width: 220,
     height: 40,
     borderRadius: 12,
-    backgroundColor: '#3758ff',
+    // backgroundColor: '#3758ff',
+    backgroundColor: 'darkgreen',
     justifyContent: 'center',
     alignItems: 'center',
-    top: 30,
+    top: 90,
   },
   buttonText: {
     color: '#fff',

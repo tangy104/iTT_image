@@ -165,7 +165,7 @@ export const {
 } = screenSharingSlice.actions;
 
 export const connectWebSocket = () => dispatch => {
-  webSocketService = new WebSocketService('ws://192.168.27.171:8080');
+  webSocketService = new WebSocketService('ws://192.168.157.171:8080');
 
   webSocketService.connect(
     () => dispatch(webSocketOpened()),

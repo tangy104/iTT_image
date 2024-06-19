@@ -39,7 +39,8 @@ const TopTabs = props => {
         justifyContent: 'space-evenly',
         height: 90,
         width: '100%',
-        backgroundColor: '#31367b',
+        // backgroundColor: '#31367b',
+        backgroundColor: '#0f113e',
         borderBottomLeftRadius: 40,
         borderBottomRightRadius: 40,
       }}>

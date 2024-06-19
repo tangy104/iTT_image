@@ -11,9 +11,12 @@ import {
   TextInput,
   Touchable,
   Modal,
+  useWindowDimensions,
 } from 'react-native';
 
 import React, {useState, useEffect, useRef} from 'react';
+import {Switch} from 'react-native-switch';
+import DeviceInfo from 'react-native-device-info';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {BackHandler} from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
@@ -36,6 +39,7 @@ import logoApp from '../../utils/images/logoApp.png';
 // import question from "../../utils/images/question.png";
 import dash from '../../utils/images/dash.png';
 import logoKGP2 from '../../utils/images/logoKGP2.png';
+import logoKGP3 from '../../utils/images/logoKGP3.png';
 import logout from '../../utils/images/logout.png';
 import logoTyre2 from '../../utils/images/logoTyre2.png';
 import chassis from '../../utils/images/chassis.jpg';
@@ -45,6 +49,7 @@ import {StatusBar} from 'expo-status-bar';
 // import { isEnabled } from "react-native/Libraries/Performance/Systrace";
 
 const Smodel = ({navigation, route}) => {
+  const {height, width} = useWindowDimensions();
   const dummyData = {
     id: '66449c4a9af26731f307d869',
     mod_num: 'SIGNA 2830.K BSVI HD',
@@ -223,18 +228,20 @@ const Smodel = ({navigation, route}) => {
   const globalToken = useSelector(state => state.token.tokenGlobal);
   const creden = useSelector(state => state.creden.creden);
 
-  console.log('creden from Smodel', creden);
+  // console.log('creden from Smodel', creden);
 
-  console.log('redux', alert);
+  // console.log('redux', alert);
   // console.log("Global token in Smodel:", globalToken);
   const [data, setData] = useState([]);
   const [apiResponseData, setApiResponseData] = useState(null);
   const [displayTin, setDisplayTin] = useState('');
   const [enableRescan, setEnableRescan] = useState(false);
+  const [enableManualInput, setEnableManualInput] = useState(false);
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [manualModal, setManualModal] = useState(false);
   const [manualTIN, setManualTIN] = useState('');
   const [failedAttempts, setFailedAttempts] = useState({});
+  const [deviceId, setDeviceId] = useState(null);
   const [loading, setLoading] = useState(true);
   const chasisRef = useRef(null);
   const baseURL = 'https://jsonplaceholder.typicode.com';
@@ -297,42 +304,54 @@ const Smodel = ({navigation, route}) => {
       // console.log("response data:", response.data.axles_data[0]);
       // console.log("response data:", response.data);
     } catch (error) {
-      console.error('Error fetching data from smodel:', error);
+      console.error('Error fetching data from smodel websocket:', error);
     } finally {
       setLoading(false); // Set loading to false after the request completes (whether successful or not)
     }
   };
-
   useEffect(() => {
-    setTimeout(async () => {
-      // const newWs = new WebSocket("ws://10.145.16.146:1337/ws_main/105");
-      const newWs = new WebSocket(`${creden.WS_URI}/ws_main/${creden.ticket}`);
-      newWs.onopen = () => {
-        // setServerState("Connected to the server");
-        console.log('Opened, connected to the server');
-      };
-      newWs.onclose = e => {
-        // setServerState("Disconnected. Check internet or server.");
-        console.log('Disconnected. Check internet or server.');
-      };
-      newWs.onerror = e => {
-        // setServerState(e.message);
-        console.log(e.message);
-      };
+    const fetchDeviceId = async () => {
+      const id = await DeviceInfo.getAndroidId();
+      setDeviceId(id);
+      // console.log('deviceId from camera screen=', id);
+    };
 
-      newWs.onmessage = async e => {
-        // Introduce a delay of 500 milliseconds using setTimeout
-        setTimeout(async () => {
-          fetchData();
-          console.log('Updated vehicle');
-          // Alert.alert("Alert", "New vehicle added");
-        }, 100);
-      };
-    }, 2000);
+    fetchDeviceId();
   }, []);
 
+  //For updating the chassis whenever database is updated, removed since it is directly done from the chassis model, thus reducing the websocket connections
+  // useEffect(() => {
+  //   setTimeout(async () => {
+  //     // const newWs = new WebSocket("ws://10.145.16.146:1337/ws_main/105");
+  //     const newWs = new WebSocket(`${creden.WS_URI}/ws_main/${creden.ticket}`);
+  //     newWs.onopen = () => {
+  //       // setServerState("Connected to the server");
+  //       console.log('Opened first time, connected to the server from Smodel');
+  //     };
+  //     newWs.onclose = e => {
+  //       // setServerState("Disconnected. Check internet or server.");
+  //       console.log(
+  //         'Disconnected finally. Check internet or server from Smodel.',
+  //       );
+  //     };
+  //     newWs.onerror = e => {
+  //       // setServerState(e.message);
+  //       console.log(e.message);
+  //     };
+
+  //     newWs.onmessage = async e => {
+  //       // Introduce a delay of 500 milliseconds using setTimeout
+  //       setTimeout(async () => {
+  //         fetchData();
+  //         console.log('Updated vehicle first time from Smodel');
+  //         // Alert.alert("Alert", "New vehicle added");
+  //       }, 100);
+  //     };
+  //   }, 1000);
+  // }, []);
+
   useEffect(() => {
-    console.log('params', route.params.vin);
+    // console.log('params', route.params.vin);
     const fetchData = async () => {
       try {
         setLoading(true); // Set loading to true before making the request
@@ -376,9 +395,9 @@ const Smodel = ({navigation, route}) => {
       chasisRef.current.time();
     }, [alert, dispatch]),
   );
-  useEffect(() => {
-    console.log('Smodel elapsedTime:', route.params?.elapsedTime);
-  }, [route.params?.elapsedTime]);
+  // useEffect(() => {
+  // console.log('Smodel elapsedTime:', route.params?.elapsedTime);
+  // }, [route.params?.elapsedTime]);
 
   useEffect(() => {
     setDisplayTin(globalTin);
@@ -416,7 +435,7 @@ const Smodel = ({navigation, route}) => {
 
   const handleButtonPress = () => {
     // Call function after a delay
-    console.log('Button Pressed');
+    // console.log('Button Pressed');
     setTimeout(() => chasisRef.current.scanned(), 1000); // 1000 milliseconds = 1 seconds
   };
 
@@ -508,6 +527,7 @@ const Smodel = ({navigation, route}) => {
             params: {
               token: globalToken,
               data: manualTIN,
+              uid: deviceId,
               // id: route.params.id,
               vin: apiResponseData.vin,
               axle_location: selectedWheelData.axle_location,
@@ -538,20 +558,93 @@ const Smodel = ({navigation, route}) => {
     }
   };
 
+  const handleValueChange = newValue => {
+    setEnableRescan(newValue);
+    if (!newValue) {
+      dispatch(
+        setSelectedWheelDataGlobal({
+          axle_location: '',
+          wheel_pos: '',
+          wheel_id: '',
+          wheel_tin: '',
+        }),
+      );
+    }
+  };
+
   return (
     <SafeAreaView style={{flex: 1}}>
       <TopTabs
-        left={ham}
+        // left={ham}
         center={logoApp}
-        right={settings}
-        tabRightFunc={toggleDropdown}
-        tabLeftFunc={() => navigation.navigate('Profile')}
+        // right={settings}
+        // tabRightFunc={toggleDropdown}
+        // tabLeftFunc={() => navigation.navigate('Profile')}
       />
+      <View
+        style={{
+          position: 'absolute',
+          zIndex: 1,
+          top: height * 0.04,
+          left: width * 0.06,
+        }}>
+        <Switch
+          value={enableRescan}
+          onValueChange={handleValueChange}
+          activeText="Enabled"
+          inActiveText="Disabled"
+          circleSize={32}
+          switchRightPx={9}
+          switchLeftPx={9}
+          // backgroundActive="#03c04a"
+          backgroundActive="darkgreen"
+          // backgroundInactive=''
+          switchWidthMultiplier={3}
+          renderInsideCircle={() => (
+            <Text
+              style={{
+                color: 'black',
+                fontSize: 6,
+                fontWeight: 'bold',
+              }}>
+              RESCAN
+            </Text>
+          )}
+        />
+      </View>
+      <View
+        style={{
+          position: 'absolute',
+          zIndex: 1,
+          top: height * 0.04,
+          right: width * 0.06,
+        }}>
+        <Switch
+          value={enableManualInput}
+          onValueChange={() => setEnableManualInput(!enableManualInput)}
+          activeText="Enabled"
+          inActiveText="Disabled"
+          circleSize={32}
+          switchRightPx={9}
+          switchLeftPx={9}
+          // backgroundActive="#03c04a"
+          backgroundActive="darkgreen"
+          // backgroundInactive=''
+          switchWidthMultiplier={3}
+          renderInsideCircle={() => (
+            <Text
+              style={{
+                color: 'black',
+                fontSize: 6,
+                fontWeight: 'bold',
+              }}>
+              MANUAL
+            </Text>
+          )}
+        />
+      </View>
       <View style={styles.container1}>
         {/* <Text>Smodel {route.params.model.id}</Text> */}
-        <View style={{top: 70, flexDirection: 'row'}}>
-          <Text style={{}}> Spare</Text>
-        </View>
 
         <Chasis
           chasisRef={chasisRef}
@@ -563,16 +656,27 @@ const Smodel = ({navigation, route}) => {
           fromCameraScreen={route.params.fromCameraScreen ? true : false}
           // id={route.params.id}
           vin={route.params.vin}
+          fetchChassisData={fetchData}
         />
         <View
           style={{
             flexDirection: 'row',
-            width: '55%',
+            width: '85%',
             top: -20,
-            justifyContent: 'space-between',
+            justifyContent: 'center',
+            // backgroundColor: 'black',
           }}>
-          <Text>Left</Text>
-          <Text>Right</Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              // backgroundColor: 'red',
+              width: '80%',
+              justifyContent: 'space-between',
+            }}>
+            <Text style={{color: 'black', fontWeight: 'bold'}}>Left</Text>
+            <Text style={{color: 'black', fontWeight: 'bold'}}> Spare</Text>
+            <Text style={{color: 'black', fontWeight: 'bold'}}>Right</Text>
+          </View>
         </View>
         {loading ? null : (
           // <ActivityIndicator size="large" color="#0000ff" />
@@ -684,13 +788,14 @@ const Smodel = ({navigation, route}) => {
             width: 180,
             height: 40,
             // top: 160,
-            // borderRadius: 30,
+            borderRadius: 30,
             // borderWidth: 3,
             // borderColor: "#31367b",
             justifyContent: 'center',
             alignItems: 'center',
             zIndex: 2,
-            backgroundColor: '#31367b',
+            // backgroundColor: '#31367b',
+            backgroundColor: '#0f113e',
           }}
           // onPress={() => navigation.navigate("Login")}
         >
@@ -725,10 +830,12 @@ const Smodel = ({navigation, route}) => {
             justifyContent: 'center',
             alignItems: 'center',
             zIndex: 2,
-            backgroundColor: '#3758ff',
+            // backgroundColor: '#3758ff',
+            backgroundColor: 'darkgreen',
           }}
           onPress={() => {
             if (
+              // wheel is selected
               // chasisRef.current.selectedButtonFFRight !== null ||
               // chasisRef.current.selectedButtonFRRight !== null ||
               // chasisRef.current.selectedButtonPARight !== null ||
@@ -745,110 +852,130 @@ const Smodel = ({navigation, route}) => {
               selectedWheelData.wheel_id !== null
             ) {
               if (
+                //wheel is selected, TIN is not there
                 selectedWheelData.wheel_tin === '' ||
                 selectedWheelData.wheel_tin === null
               ) {
                 const key = JSON.stringify(selectedWheelData); // Constructing unique key
                 const numberOfFailedAttempts = failedAttempts[key] || 0; // Get the number of failed attempts for the selected tyre
-                if (numberOfFailedAttempts >= 3) {
-                  // If yes, prompt the user to choose between manual input and scanning
-                  Alert.alert(
-                    'Exceeded scan attempts',
-                    'You have exceeded 3 scans for this tyre. Would you like to proceed with manual input?',
-                    [
-                      {
-                        text: 'Proceed scanning again',
-                        onPress: () => {
-                          const timeOut = setTimeout(() => {
-                            // Navigate to tyre scan screen
-                            navigation.navigate('CameraScreen', {
-                              model: apiResponseData,
-                              // id: route.params.id,
-                              vin: apiResponseData.vin,
-                            });
-                          }, 500);
-                          timeOut();
-                          handleFailedAttempt();
-                          handleButtonPress();
-                        },
-                      },
-                      {
-                        text: 'Manual input',
-                        onPress: () => {
-                          // Navigate to manual input screen
-                          // navigation.navigate("ManualInputScreen");
-                          console.log('Manual input selected');
-                          setManualModal(true);
-                          console.log('Manual modal:', manualModal);
-                        },
-                      },
-                    ],
-                  );
-                } else {
-                  setTimeout(() => {
-                    // Navigate to tyre scan screen
-                    navigation.navigate('CameraScreen', {
-                      model: apiResponseData,
-                      // id: route.params.id,
-                      vin: apiResponseData.vin,
-                    });
-                  }, 600);
+                if (enableManualInput) {
+                  //wheel is selected, TIN is not there, manual input enabled
+                  setManualModal(true);
                   handleFailedAttempt();
-                  handleButtonPress();
+                } else {
+                  //wheel is selected, TIN is not there, manual input disabled
+                  if (numberOfFailedAttempts >= 3) {
+                    //wheel is selected, TIN is not there, failed attempts more than 3
+                    // If yes, prompt the user to choose between manual input and scanning
+                    Alert.alert(
+                      'Exceeded scan attempts',
+                      'You have exceeded 3 scans for this tyre. Would you like to proceed with manual input?',
+                      [
+                        {
+                          text: 'Proceed scanning again',
+                          onPress: () => {
+                            const timeOut = setTimeout(() => {
+                              // Navigate to tyre scan screen
+                              navigation.navigate('CameraScreen', {
+                                model: apiResponseData,
+                                // id: route.params.id,
+                                vin: apiResponseData.vin,
+                              });
+                            }, 500);
+                            timeOut();
+                            handleFailedAttempt();
+                            handleButtonPress();
+                          },
+                        },
+                        {
+                          text: 'Manual input',
+                          onPress: () => {
+                            // Navigate to manual input screen
+                            // navigation.navigate("ManualInputScreen");
+                            console.log('Manual input selected');
+                            setManualModal(true);
+                            console.log('Manual modal:', manualModal);
+                          },
+                        },
+                      ],
+                    );
+                  } else {
+                    //wheel is selected, TIN is not there, failed attempts less than 3
+                    setTimeout(() => {
+                      // Navigate to tyre scan screen
+                      navigation.navigate('CameraScreen', {
+                        model: apiResponseData,
+                        // id: route.params.id,
+                        vin: apiResponseData.vin,
+                      });
+                    }, 600);
+                    handleFailedAttempt();
+                    handleButtonPress();
+                  }
                 }
               } else {
+                // wheel is selected, TIN is there
                 Alert.alert(
                   'Alert',
-                  'Wheel already scanned, do you want to scan again?',
+                  'Wheel TIN already scanned/entered, do you want to scan/enter again?',
                   [
                     {
                       text: 'Cancel',
                       style: 'cancel',
                     },
                     {
-                      text: 'Scan',
+                      text: enableManualInput ? 'Enter' : 'Scan',
                       onPress: () => {
                         const key = JSON.stringify(selectedWheelData); // Constructing unique key
                         const numberOfFailedAttempts = failedAttempts[key] || 0; // Get the number of failed attempts for the selected tyre
-                        if (numberOfFailedAttempts >= 3) {
-                          // If yes, prompt the user to choose between manual input and scanning
-                          Alert.alert(
-                            'Exceeded scan attempts',
-                            'You have exceeded 3 scans for this tyre. Would you like to proceed with manual input?',
-                            [
-                              {
-                                text: 'Proceed scanning again',
-                                onPress: () => {
-                                  // Navigate to tyre scan screen
-                                  navigation.navigate('CameraScreen', {
-                                    model: apiResponseData,
-                                    // id: route.params.id,
-                                    vin: apiResponseData.vin,
-                                  });
-                                  handleFailedAttempt();
-                                  handleButtonPress();
-                                },
-                              },
-                              {
-                                text: 'Manual Input',
-                                onPress: () => {
-                                  // Navigate to manual input screen
-                                  // navigation.navigate("ManualInputScreen");
-                                  console.log('Manual input selected');
-                                  setManualModal(!manualModal);
-                                  console.log('Manual modal:', manualModal);
-                                },
-                              },
-                            ],
-                          );
-                        } else {
-                          navigation.navigate('CameraScreen', {
-                            model: apiResponseData,
-                            // id: route.params.id,
-                            vin: apiResponseData.vin,
-                          });
+                        if (enableManualInput) {
+                          //wheel is selected, TIN is there, manual input enabled
+                          setManualModal(true);
                           handleFailedAttempt();
-                          handleButtonPress();
+                        } else {
+                          //wheel is selected, TIN is there, manual input disabled
+                          if (numberOfFailedAttempts >= 3) {
+                            //wheel is selected, TIN is there, failed attempts more than 3
+                            // If yes, prompt the user to choose between manual input and scanning
+                            Alert.alert(
+                              'Exceeded scan attempts',
+                              'You have exceeded 3 scans for this tyre. Would you like to proceed with manual input?',
+                              [
+                                {
+                                  text: 'Proceed scanning again',
+                                  onPress: () => {
+                                    // Navigate to tyre scan screen
+                                    navigation.navigate('CameraScreen', {
+                                      model: apiResponseData,
+                                      // id: route.params.id,
+                                      vin: apiResponseData.vin,
+                                    });
+                                    handleFailedAttempt();
+                                    handleButtonPress();
+                                  },
+                                },
+                                {
+                                  text: 'Manual Input',
+                                  onPress: () => {
+                                    // Navigate to manual input screen
+                                    // navigation.navigate("ManualInputScreen");
+                                    console.log('Manual input selected');
+                                    setManualModal(!manualModal);
+                                    console.log('Manual modal:', manualModal);
+                                  },
+                                },
+                              ],
+                            );
+                          } else {
+                            //wheel is selected, TIN is there, failed attempts less than 3
+                            navigation.navigate('CameraScreen', {
+                              model: apiResponseData,
+                              // id: route.params.id,
+                              vin: apiResponseData.vin,
+                            });
+                            handleFailedAttempt();
+                            handleButtonPress();
+                          }
                         }
                       },
                     },
@@ -856,6 +983,7 @@ const Smodel = ({navigation, route}) => {
                 );
               }
             } else {
+              // wheel is not selected
               Alert.alert(
                 'Alert',
                 'No wheel selected, select wheel to perform scan',
@@ -863,7 +991,7 @@ const Smodel = ({navigation, route}) => {
             }
           }}>
           <Text style={{color: '#fff', fontWeight: 'bold', fontSize: 17}}>
-            Scan the TIN
+            Scan TIN
           </Text>
         </TouchableOpacity>
         <View
@@ -877,7 +1005,8 @@ const Smodel = ({navigation, route}) => {
             height: 40,
             borderRadius: 12,
             borderWidth: 1.5,
-            borderColor: '#3758ff',
+            // borderColor: '#3758ff',
+            borderColor: '#0f113e',
             //   justifyContent: "center",
             alignItems: 'center',
             //   zIndex: 2,
@@ -912,7 +1041,8 @@ const Smodel = ({navigation, route}) => {
         tabLeftFunc={() => navigation.navigate('Dashboard')}
         tabRightFunc={handleLogout}
       />
-      <Modal
+      {/*Modal for rescanning*/}
+      {/* <Modal
         visible={isDropdownVisible}
         transparent={true}
         animationType="fade"
@@ -967,7 +1097,7 @@ const Smodel = ({navigation, route}) => {
             </Text>
           </TouchableOpacity>
         </View>
-      </Modal>
+      </Modal> */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -1015,7 +1145,8 @@ const Smodel = ({navigation, route}) => {
                 // top: 160,
                 borderRadius: 12,
                 borderWidth: 1.5,
-                borderColor: '#3758ff',
+                // borderColor: '#3758ff',
+                borderColor: '#0f113e',
                 //   justifyContent: "center",
                 alignItems: 'center',
                 //   zIndex: 2,
@@ -1042,14 +1173,15 @@ const Smodel = ({navigation, route}) => {
               style={{
                 width: 190,
                 height: 40,
-                // top: 160,
+                marginTop: 25,
                 borderRadius: 12,
                 // borderWidth: 3,
                 // borderColor: "#3758ff",
                 justifyContent: 'center',
                 alignItems: 'center',
                 zIndex: 2,
-                backgroundColor: '#3758ff',
+                // backgroundColor: '#3758ff',
+                backgroundColor: 'darkgreen',
               }}
               onPress={putData}>
               <Text

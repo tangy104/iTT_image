@@ -215,7 +215,7 @@ const SAxle = props => {
   return (
     <View
       style={{
-        // backgroundColor: "red",
+        // backgroundColor: 'red',
         flexDirection: 'row',
         justifyContent: 'space-between',
         // alignItems: "stretch",
@@ -1158,7 +1158,7 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     justifyContent: 'center',
     alignItems: 'center',
-    margin: 3,
+    margin: 7,
   },
   text: {
     color: '#fff',

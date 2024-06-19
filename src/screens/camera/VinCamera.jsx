@@ -17,6 +17,11 @@ import {Switch} from 'react-native-switch';
 // import {IconButton, MD3Colors} from 'react-native-paper';
 // import {BarCodeScanner} from 'expo-barcode-scanner';
 import {CameraView, useCameraPermissions, Camera} from 'expo-camera';
+import {
+  GestureHandlerRootView,
+  PinchGestureHandler,
+  State,
+} from 'react-native-gesture-handler';
 import {useSelector, useDispatch} from 'react-redux';
 import {setTokenGlobal} from '../../state/tokenslice';
 import {setCreden} from '../../state/credenSlice';
@@ -34,6 +39,7 @@ import dash from '../../utils/images/dash.png';
 import logoKGP2 from '../../utils/images/logoKGP2.png';
 import logout from '../../utils/images/logout.png';
 import barcode from '../../utils/images/barcode.png';
+import logoKGP3 from '../../utils/images/logoKGP3.png';
 // import { TouchableOpacity } from "react-native-web";
 
 const BarcodeScannerScreen = ({navigation}) => {
@@ -223,6 +229,17 @@ const BarcodeScannerScreen = ({navigation}) => {
   const [loading, setLoading] = useState(false);
   const [switchValue, setSwitchValue] = useState(true);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [zoom, setZoom] = useState(0);
+
+  const onPinchEvent = event => {
+    if (event.nativeEvent.scale > 1) {
+      setZoom(Math.min(zoom + 0.05, 1)); // Maximum zoom is 1
+      // console.log('Zoom in', zoom);
+    } else {
+      setZoom(Math.max(zoom - 0.05, 0)); // Minimum zoom is 0
+      // console.log('Zoom out', zoom);
+    }
+  };
 
   // if (!permission) {
   //   // Camera permissions are still loading.
@@ -270,7 +287,8 @@ const BarcodeScannerScreen = ({navigation}) => {
 
   const handleBarCodeScanned = ({type, data}) => {
     setLoading(true);
-    // console.log('barcodedata', data);
+    console.log('barcodedata', data);
+    console.log('barcodetype', type);
 
     if (type) {
       if (!scanned1 || (scanned1 && data !== barcode1)) {
@@ -417,6 +435,42 @@ const BarcodeScannerScreen = ({navigation}) => {
             ],
             {cancelable: false},
           );
+      } else if (error.response && error.response.status === 401) {
+        console.error(error.response.data.detail);
+        dispatch(
+          setCreden({
+            ticket: null,
+            URI: creden.URI,
+            WS_URI: creden.WS_URI,
+            RTMP_URI: creden.RTMP_URI,
+          }),
+        );
+        // Show an alert and navigate to the login page
+        Alert.alert(
+          'Invalid Credentials',
+          'Your shift has ended. Please log in again to continue.',
+          [
+            {
+              text: 'OK',
+              onPress: () => navigation.navigate('LoginNav', {screen: 'Login'}), // Navigate to the login page
+            },
+          ],
+          {cancelable: false},
+        );
+      } else if (error.response && error.response.status === 404) {
+        console.error(error.response.data.detail);
+        // Show an alert and navigate to the login page
+        Alert.alert(
+          `Alert,${error.response.data.detail}`,
+          'Please check the VIN and VC details and try again',
+          [
+            {
+              text: 'OK',
+              // onPress: () => navigation.navigate('LoginNav', {screen: 'Login'}), // Navigate to the login page
+            },
+          ],
+          {cancelable: false},
+        );
       } else {
         console.error('Error fetching data:', error);
       }
@@ -450,7 +504,10 @@ const BarcodeScannerScreen = ({navigation}) => {
       });
     } catch (error) {
       // Handle the error response
-      if (error.response && error.response.status === 403) {
+      if (
+        error.response &&
+        (error.response.status === 403 || error.response.status === 401)
+      ) {
         console.error(error.response.data.detail);
         async () => {
           try {
@@ -483,6 +540,20 @@ const BarcodeScannerScreen = ({navigation}) => {
             ],
             {cancelable: false},
           );
+      } else if (error.response && error.response.status === 404) {
+        console.error(error.response.data.detail);
+        // Show an alert and navigate to the login page
+        Alert.alert(
+          `Alert,${error.response.data.detail}`,
+          'Please check the VIN and VC details and try again',
+          [
+            {
+              text: 'OK',
+              // onPress: () => navigation.navigate('LoginNav', {screen: 'Login'}), // Navigate to the login page
+            },
+          ],
+          {cancelable: false},
+        );
       } else {
         console.error('Error fetching data:', error);
       }
@@ -593,7 +664,8 @@ const BarcodeScannerScreen = ({navigation}) => {
             justifyContent: 'center',
             alignItems: 'center',
             zIndex: 2,
-            backgroundColor: '#3758ff',
+            // backgroundColor: '#3758ff',
+            backgroundColor: 'darkgreen',
           }}
           onPress={handleScanAgain}>
           <Text style={{color: '#fff', fontSize: 17, fontWeight: 'bold'}}>
@@ -619,7 +691,8 @@ const BarcodeScannerScreen = ({navigation}) => {
             justifyContent: 'center',
             alignItems: 'center',
             zIndex: 2,
-            backgroundColor: '#3758ff',
+            // backgroundColor: '#3758ff',
+            backgroundColor: 'darkgreen',
           }}
           onPress={handlePostData}
           // onPress={() => {
@@ -689,191 +762,200 @@ const BarcodeScannerScreen = ({navigation}) => {
     );
   };
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar />
-      <TopTabs
-        left={ham}
-        center={logoApp}
-        right={question}
-        tabLeftFunc={() => navigation.navigate('Profile')}
-        tabRightFunc={() => navigation.navigate('AboutApp')}
-      />
-      <View style={{position: 'absolute', zIndex: 1, top: 29, right: 25}}>
-        <Switch
-          value={switchValue}
-          onValueChange={() => setSwitchValue(!switchValue)}
-          activeText="Scan"
-          inActiveText="Manual"
-          circleSize={30}
-          switchRightPx={5}
-          // backgroundActive=''
-          // backgroundInactive=''
-          switchWidthMultiplier={3}
+    <GestureHandlerRootView>
+      <SafeAreaView style={styles.container}>
+        <StatusBar />
+        <TopTabs
+          left={ham}
+          center={logoApp}
+          // right={question}
+          tabLeftFunc={() => navigation.navigate('Profile')}
+          // tabRightFunc={() => navigation.navigate('AboutApp')}
         />
-      </View>
-      {switchValue ? (
-        <View style={{flex: 1, alignItems: 'center'}}>
-          <View style={[styles.scannerContainer]}>
-            <CameraView
-              onBarcodeScanned={handleBarCodeScanned}
-              barcodeScannerSettings={{
-                barcodeTypes: [
-                  'aztec',
-                  'ean13',
-                  'ean8',
-                  'qr',
-                  'pdf417',
-                  'upc_e',
-                  'datamatrix',
-                  'code39',
-                  'code93',
-                  'itf14',
-                  'codabar',
-                  'code128',
-                  'upc_a',
-                ],
-              }}
-              style={[
-                StyleSheet.absoluteFillObject,
-                {borderWidth: 2, borderColor: 'black'},
-              ]}
+        <View style={{position: 'absolute', zIndex: 1, top: '4%', right: '6%'}}>
+          <Switch
+            value={switchValue}
+            onValueChange={() => setSwitchValue(!switchValue)}
+            activeText="Scan"
+            inActiveText="Manual"
+            circleSize={30}
+            switchRightPx={5}
+            // backgroundActive="#03c04a"
+            backgroundActive="darkgreen"
+            // backgroundInactive=''
+            switchWidthMultiplier={3}
+          />
+        </View>
+        {switchValue ? (
+          <View style={{flex: 1, alignItems: 'center'}}>
+            <View style={[styles.scannerContainer]}>
+              <PinchGestureHandler
+                onGestureEvent={onPinchEvent}
+                onHandlerStateChange={onPinchEvent}>
+                <CameraView
+                  onBarcodeScanned={handleBarCodeScanned}
+                  barcodeScannerSettings={{
+                    barcodeTypes: [
+                      'aztec',
+                      'ean13',
+                      'ean8',
+                      'qr',
+                      'pdf417',
+                      'upc_e',
+                      'datamatrix',
+                      'code39',
+                      'code93',
+                      'itf14',
+                      'codabar',
+                      'code128',
+                      'upc_a',
+                    ],
+                  }}
+                  style={[
+                    StyleSheet.absoluteFillObject,
+                    {borderWidth: 2, borderColor: 'black'},
+                  ]}
+                  zoom={zoom}
 
-              // style={{height: "50%", width: "100%"}}
-            />
+                  // style={{height: "50%", width: "100%"}}
+                />
+              </PinchGestureHandler>
 
-            <View
-              style={[
-                styles.frame,
-                {
-                  width: frameWidth,
-                  height: frameHeight,
-                },
-              ]}></View>
-            {loading && (
-              <ActivityIndicator
-                size="large"
-                color="#31367b"
-                style={styles.loadingIndicator}
-              />
-            )}
-          </View>
-          {/* {renderScanButton()} */}
-
-          <View style={[styles.inputContainer, {width: windowWidth}]}>
-            <View
-              style={{
-                margin: 20,
-                marginBottom: 0,
-                flexDirection: 'row',
-                justifyContent: 'space-evenly',
-                width: '80%',
-                height: 40,
-                borderRadius: 12,
-                borderWidth: 1.5,
-                borderColor: '#3758ff',
-                //   justifyContent: "center",
-                alignItems: 'center',
-                //   zIndex: 2,
-              }}>
-              <Image
-                source={barcode}
-                style={{
-                  resizeMode: 'contain',
-                  height: 28,
-                  width: 28,
-                  right: 20,
-                }}></Image>
-              <View>
-                {barcode1 ? (
-                  <Text
-                    style={{
-                      height: 40,
-                      width: 180,
-                      right: 40,
-                      fontSize: 15,
-                      top: 10,
-                      color: 'black',
-                    }}>
-                    {barcode1}
-                  </Text>
-                ) : (
-                  // <TextInput
-                  //   placeholder="VIN no."
-                  //   placeholderTextColor="grey"
-                  //   style={{height: 40, width: 180, right: 40, fontSize: 15}}
-                  // />
-                  <Text
-                    style={{
-                      height: 40,
-                      width: 180,
-                      right: 40,
-                      fontSize: 15,
-                      top: 10,
-                      color: 'grey',
-                    }}>
-                    VIN no.
-                  </Text>
-                )}
-              </View>
+              <View
+                style={[
+                  styles.frame,
+                  {
+                    width: frameWidth,
+                    height: frameHeight,
+                  },
+                ]}></View>
+              {loading && (
+                <ActivityIndicator
+                  size="large"
+                  color="#31367b"
+                  style={styles.loadingIndicator}
+                />
+              )}
             </View>
-            <View
-              style={{
-                margin: 20,
-                marginBottom: 5,
-                marginTop: 6,
-                flexDirection: 'row',
-                justifyContent: 'space-evenly',
-                width: '80%',
-                height: 40,
-                borderRadius: 12,
-                borderWidth: 1.5,
-                borderColor: '#3758ff',
-                //   justifyContent: "center",
-                alignItems: 'center',
-                //   zIndex: 2,
-              }}>
-              <Image
-                source={barcode}
+            {/* {renderScanButton()} */}
+
+            <View style={[styles.inputContainer, {width: windowWidth}]}>
+              <View
                 style={{
-                  resizeMode: 'contain',
-                  height: 28,
-                  width: 28,
-                  right: 20,
-                }}></Image>
-              <View>
-                {barcode2 ? (
-                  <Text
-                    style={{
-                      height: 40,
-                      width: 180,
-                      right: 40,
-                      fontSize: 15,
-                      top: 10,
-                      color: 'black',
-                    }}>
-                    {barcode2}
-                  </Text>
-                ) : (
-                  // <TextInput
-                  //   placeholder="VC no."
-                  //   placeholderTextColor="grey"
-                  //   style={{height: 40, width: 180, right: 40, fontSize: 15}}
-                  // />
-                  <Text
-                    style={{
-                      height: 40,
-                      width: 180,
-                      right: 40,
-                      fontSize: 15,
-                      top: 10,
-                      color: 'grey',
-                    }}>
-                    VC no.
-                  </Text>
-                )}
+                  margin: 20,
+                  marginBottom: 0,
+                  flexDirection: 'row',
+                  justifyContent: 'space-evenly',
+                  width: '80%',
+                  height: 40,
+                  borderRadius: 12,
+                  borderWidth: 1.5,
+                  // borderColor: '#3758ff',
+                  borderColor: '#0f113e',
+                  //   justifyContent: "center",
+                  alignItems: 'center',
+                  //   zIndex: 2,
+                }}>
+                <Image
+                  source={barcode}
+                  style={{
+                    resizeMode: 'contain',
+                    height: 28,
+                    width: 28,
+                    right: 20,
+                  }}></Image>
+                <View>
+                  {barcode1 ? (
+                    <Text
+                      style={{
+                        height: 40,
+                        width: 180,
+                        right: 40,
+                        fontSize: 15,
+                        top: 10,
+                        color: 'black',
+                      }}>
+                      {barcode1}
+                    </Text>
+                  ) : (
+                    // <TextInput
+                    //   placeholder="VIN no."
+                    //   placeholderTextColor="grey"
+                    //   style={{height: 40, width: 180, right: 40, fontSize: 15}}
+                    // />
+                    <Text
+                      style={{
+                        height: 40,
+                        width: 180,
+                        right: 40,
+                        fontSize: 15,
+                        top: 10,
+                        color: 'grey',
+                      }}>
+                      VIN no.
+                    </Text>
+                  )}
+                </View>
               </View>
-            </View>
-            {/* <View style={styles.inputbar}>
+              <View
+                style={{
+                  margin: 20,
+                  marginBottom: 4,
+                  marginTop: 12,
+                  flexDirection: 'row',
+                  justifyContent: 'space-evenly',
+                  width: '80%',
+                  height: 40,
+                  borderRadius: 12,
+                  borderWidth: 1.5,
+                  // borderColor: '#3758ff',
+                  borderColor: '#0f113e',
+                  //   justifyContent: "center",
+                  alignItems: 'center',
+                  //   zIndex: 2,
+                }}>
+                <Image
+                  source={barcode}
+                  style={{
+                    resizeMode: 'contain',
+                    height: 28,
+                    width: 28,
+                    right: 20,
+                  }}></Image>
+                <View>
+                  {barcode2 ? (
+                    <Text
+                      style={{
+                        height: 40,
+                        width: 180,
+                        right: 40,
+                        fontSize: 15,
+                        top: 10,
+                        color: 'black',
+                      }}>
+                      {barcode2}
+                    </Text>
+                  ) : (
+                    // <TextInput
+                    //   placeholder="VC no."
+                    //   placeholderTextColor="grey"
+                    //   style={{height: 40, width: 180, right: 40, fontSize: 15}}
+                    // />
+                    <Text
+                      style={{
+                        height: 40,
+                        width: 180,
+                        right: 40,
+                        fontSize: 15,
+                        top: 10,
+                        color: 'grey',
+                      }}>
+                      VC no.
+                    </Text>
+                  )}
+                </View>
+              </View>
+              {/* <View style={styles.inputbar}>
           <TextInput
             style={styles.input}
             placeholder={barcode1 ? barcode1 : "VIN no."}
@@ -894,136 +976,140 @@ const BarcodeScannerScreen = ({navigation}) => {
           />
         </View> */}
 
-            {renderScanButton()}
-            {renderPostButton()}
-          </View>
-        </View>
-      ) : (
-        <View
-          style={{
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: '#f2f2f2',
-            width: windowWidth,
-          }}>
-          <Text
-            style={{
-              fontSize: 17,
-              color: '#7f7f7f',
-              textAlign: 'center',
-              // top: 10,
-              bottom: 30,
-            }}>
-            Enter the of VIN and VC details of the vehicle
-          </Text>
-          <View
-            style={{
-              margin: 20,
-              flexDirection: 'row',
-              justifyContent: 'space-evenly',
-              width: '80%',
-              height: 40,
-              borderRadius: 12,
-              borderWidth: 1.5,
-              borderColor: '#3758ff',
-              //   justifyContent: "center",
-              alignItems: 'center',
-              //   zIndex: 2,
-            }}>
-            <Image
-              source={barcode}
-              style={{
-                resizeMode: 'contain',
-                height: 28,
-                width: 28,
-                right: 20,
-              }}></Image>
-            <View>
-              <TextInput
-                style={{
-                  height: 40,
-                  width: 180,
-                  right: 40,
-                  fontSize: 15,
-                  color: 'black',
-                }}
-                placeholder="VIN no."
-                value={manualInput1}
-                // keyboardType="numeric"
-                placeholderTextColor="grey"
-                onChangeText={text => setManualInput1(text)}
-              />
+              {renderScanButton()}
+              {renderPostButton()}
             </View>
           </View>
+        ) : (
           <View
             style={{
-              margin: 20,
-              marginTop: 6,
-              flexDirection: 'row',
-              justifyContent: 'space-evenly',
-              width: '80%',
-              height: 40,
-              borderRadius: 12,
-              borderWidth: 1.5,
-              borderColor: '#3758ff',
-              //   justifyContent: "center",
-              alignItems: 'center',
-              //   zIndex: 2,
-            }}>
-            <Image
-              source={barcode}
-              style={{
-                resizeMode: 'contain',
-                height: 28,
-                width: 28,
-                right: 20,
-              }}></Image>
-            <View>
-              <TextInput
-                style={{
-                  height: 40,
-                  width: 180,
-                  right: 40,
-                  fontSize: 15,
-                  color: 'black',
-                }}
-                placeholder="VC no."
-                value={manualInput2}
-                // keyboardType="numeric"
-                placeholderTextColor="grey"
-                onChangeText={text => setManualInput2(text)}
-              />
-            </View>
-          </View>
-          <TouchableOpacity
-            style={{
-              width: 220,
-              height: 40,
-              top: 40,
-              borderRadius: 12,
+              flex: 1,
               justifyContent: 'center',
               alignItems: 'center',
-              zIndex: 2,
-              backgroundColor: '#3758ff',
-            }}
-            onPress={handleManualPostData}>
-            <Text style={{color: '#fff', fontSize: 17, fontWeight: 'bold'}}>
-              Proceed
+              backgroundColor: '#f2f2f2',
+              width: windowWidth,
+            }}>
+            <Text
+              style={{
+                fontSize: 17,
+                color: '#7f7f7f',
+                textAlign: 'center',
+                // top: 10,
+                bottom: 30,
+              }}>
+              Enter the of VIN and VC details of the vehicle
             </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-      {!keyboardVisible && (
-        <Tabs
-          left={dash}
-          center={logoKGP2}
-          right={logout}
-          tabLeftFunc={() => navigation.navigate('Dashboard')}
-          tabRightFunc={handleLogout}
-        />
-      )}
-    </SafeAreaView>
+            <View
+              style={{
+                margin: 20,
+                flexDirection: 'row',
+                justifyContent: 'space-evenly',
+                width: '80%',
+                height: 40,
+                borderRadius: 12,
+                borderWidth: 1.5,
+                // borderColor: '#3758ff',
+                borderColor: '#0f113e',
+                //   justifyContent: "center",
+                alignItems: 'center',
+                //   zIndex: 2,
+              }}>
+              <Image
+                source={barcode}
+                style={{
+                  resizeMode: 'contain',
+                  height: 28,
+                  width: 28,
+                  right: 20,
+                }}></Image>
+              <View>
+                <TextInput
+                  style={{
+                    height: 40,
+                    width: 180,
+                    right: 40,
+                    fontSize: 15,
+                    color: 'black',
+                  }}
+                  placeholder="VIN no."
+                  value={manualInput1}
+                  // keyboardType="numeric"
+                  placeholderTextColor="grey"
+                  onChangeText={text => setManualInput1(text)}
+                />
+              </View>
+            </View>
+            <View
+              style={{
+                margin: 20,
+                marginTop: 6,
+                flexDirection: 'row',
+                justifyContent: 'space-evenly',
+                width: '80%',
+                height: 40,
+                borderRadius: 12,
+                borderWidth: 1.5,
+                // borderColor: '#3758ff',
+                borderColor: '#0f113e',
+                //   justifyContent: "center",
+                alignItems: 'center',
+                //   zIndex: 2,
+              }}>
+              <Image
+                source={barcode}
+                style={{
+                  resizeMode: 'contain',
+                  height: 28,
+                  width: 28,
+                  right: 20,
+                }}></Image>
+              <View>
+                <TextInput
+                  style={{
+                    height: 40,
+                    width: 180,
+                    right: 40,
+                    fontSize: 15,
+                    color: 'black',
+                  }}
+                  placeholder="VC no."
+                  value={manualInput2}
+                  // keyboardType="numeric"
+                  placeholderTextColor="grey"
+                  onChangeText={text => setManualInput2(text)}
+                />
+              </View>
+            </View>
+            <TouchableOpacity
+              style={{
+                width: 220,
+                height: 40,
+                top: 40,
+                borderRadius: 12,
+                justifyContent: 'center',
+                alignItems: 'center',
+                zIndex: 2,
+                // backgroundColor: '#3758ff',
+                backgroundColor: 'darkgreen',
+              }}
+              onPress={handleManualPostData}>
+              <Text style={{color: '#fff', fontSize: 17, fontWeight: 'bold'}}>
+                Proceed
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        {!keyboardVisible && (
+          <Tabs
+            left={dash}
+            center={logoKGP2}
+            right={logout}
+            tabLeftFunc={() => navigation.navigate('Dashboard')}
+            tabRightFunc={handleLogout}
+          />
+        )}
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 };
 

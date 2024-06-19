@@ -21,14 +21,18 @@ import {setCreden} from '../../state/credenSlice';
 import Tabs from '../../navigation/Tabs';
 
 import backgroundImage from '../../utils/images/backgroundImage.png';
+import backgroundImage2 from '../../utils/images/backgroundImage2.png';
 import logoTATA from '../../utils/images/logoTATA.png';
 import logoApp from '../../utils/images/logoApp.png';
 import logoKGP2 from '../../utils/images/logoKGP2.png';
+import logoKGP3 from '../../utils/images/logoKGP3.png';
 import Profile from '../../utils/images/profile.png';
 import doc from '../../utils/images/doc.png';
 import question from '../../utils/images/question.png';
+import iTTText from '../../utils/images/iTTText.png';
+import welcomeText from '../../utils/images/welcomeText.png';
 
-const LogInHome = ({navigation}) => {
+const StackHome = ({navigation}) => {
   const [ipAddress, setIpAddress] = useState('');
   const [isDialogVisible, setIsDialogVisible] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
@@ -130,29 +134,37 @@ const LogInHome = ({navigation}) => {
       <StatusBar />
       <View style={styles.linearGradient}>
         <ImageBackground
-          source={backgroundImage}
+          source={backgroundImage2}
           style={styles.imageBackground}>
           <Image
             source={logoTATA}
-            style={{resizeMode: 'contain', width: 80, height: 50, top: 60}}
+            style={{resizeMode: 'contain', width: 95, height: 65, top: 30}}
           />
           <Text style={styles.text1}>TATA MOTORS LTD.</Text>
           <Image
             source={logoApp}
             style={{resizeMode: 'contain', width: 140, height: 120, top: 75}}
           />
-          <Text style={styles.text2}>Intelligent Tyre Tracer</Text>
-          <Text style={{fontSize: 30, top: 120, color: 'black'}}>
+          {/* <Text style={styles.text2}>intelligent Tyre Tracer</Text> */}
+          <Image
+            source={iTTText}
+            style={{resizeMode: 'contain', width: 250, top: 40}}
+          />
+          {/* <Text style={{fontSize: 29, top: 120, color: 'black'}}>
             Welcome to
             <Text style={{fontStyle: 'italic'}}>&nbsp;i&nbsp;</Text>
             TT
-          </Text>
+          </Text> */}
+          <Image
+            source={welcomeText}
+            style={{resizeMode: 'contain', width: 250, top: 75}}
+          />
           <Text
             style={{
               fontSize: 17,
               color: '#7f7f7f',
               textAlign: 'center',
-              top: 130,
+              top: 60,
             }}>
             AI-based Tyre Specification Reading and Downstream Analytics
           </Text>
@@ -160,22 +172,22 @@ const LogInHome = ({navigation}) => {
             style={styles.getStartedButton}
             onPress={() => {
               // isLoggedIn
-              // ? navigation.navigate('StackNav', {screen: 'ScanVIN'})
               navigation.navigate('Login');
+              // : navigation.navigate('Login');
             }}>
             <Text style={styles.text}>Get started</Text>
           </TouchableOpacity>
           <View style={styles.developedByView}>
-            <Text style={styles.developedByText}>Developed by</Text>
+            <Text style={styles.developedByText}>Developed by:</Text>
           </View>
           <View style={styles.developedByInfoView}>
-            <Image source={logoKGP2} style={styles.logoKGP2} />
+            {/* <Image source={logoKGP2} style={styles.logoKGP2} /> */}
             <View style={styles.developedByTextView}>
               <Text style={styles.developedByTextLines}>
-                Centre of Excellence in Advanced
+                Centre of Excellence in
               </Text>
               <Text style={styles.developedByTextLines}>
-                Manufacturing Technology
+                Advanced Manufacturing Technology
               </Text>
               <Text style={styles.developedByTextLines}>IIT Kharagpur</Text>
             </View>
@@ -207,7 +219,7 @@ const LogInHome = ({navigation}) => {
   );
 };
 
-export default LogInHome;
+export default StackHome;
 
 const styles = StyleSheet.create({
   safeContainer: {
@@ -221,11 +233,12 @@ const styles = StyleSheet.create({
   imageBackground: {
     flex: 1,
     width: '100%',
-    height: '55%',
+    height: '60%',
     alignItems: 'center',
   },
+
   text1: {
-    top: 70,
+    top: 30,
     color: '#d9d9d9',
     fontSize: 20,
     fontWeight: 'bold',
@@ -247,14 +260,17 @@ const styles = StyleSheet.create({
   getStartedButton: {
     width: 180,
     height: 40,
-    top: 160,
+    top: 90,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#31367b',
+    // backgroundColor: '#31367b',
+    // backgroundColor: '#234f1e',
+    backgroundColor: 'darkgreen',
+    borderRadius: 10,
   },
   developedByView: {
-    top: 225,
-    alignSelf: 'flex-start',
+    top: 135,
+    // alignSelf: 'flex-start',
     height: 35,
     width: 150,
     borderRadius: 5,
@@ -270,11 +286,14 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   developedByInfoView: {
-    top: 220,
+    top: 130,
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    // alignSelf: 'flex-start',
+    // backgroundColor: 'red',
+    paddingLeft: 10,
   },
   logoKGP2: {
     right: 20,
@@ -284,9 +303,11 @@ const styles = StyleSheet.create({
   },
   developedByTextView: {
     padding: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   developedByTextLines: {
-    fontSize: 15.5,
+    fontSize: 16.5,
     color: 'black',
   },
 });

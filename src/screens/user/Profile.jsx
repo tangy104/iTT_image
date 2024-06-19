@@ -1,7 +1,6 @@
 import {
   View,
   Text,
-  Button,
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
@@ -10,29 +9,26 @@ import {
   ImageBackground,
   TextInput,
   useWindowDimensions,
+  ScrollView,
+  FlatList,
+  Alert,
+  Modal,
 } from 'react-native';
 import React, {useState, useEffect} from 'react';
-// import {LinearGradient} from 'expo-linear-gradient';
-// import { useFonts } from "expo-font";
-// import {useFonts, allura, Allura_400Regular} from '@expo-google-fonts/allura';
-// import AppLoading from "expo-app-loading";
-// import {Formik} from 'formik';
-// import * as Yup from 'yup';
-// import Animated, {
-//   FadeIn,
-//   FadeOut,
-//   FadeInUp,
-//   FadeInDown,
-// } from 'react-native-reanimated';
+import {DataTable} from 'react-native-paper';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useSelector, useDispatch} from 'react-redux';
 import {setTokenGlobal} from '../../state/tokenslice';
+import {setCreden} from '../../state/credenSlice';
 
 import Tabs from '../../navigation/Tabs';
 
 import image from '../../utils/images/light.png';
 import backgroundImage from '../../utils/images/backgroundImage.png';
+import backgroundImage2 from '../../utils/images/backgroundImage2.png';
 import logoTATA from '../../utils/images/logoTATA.png';
+import logoTATA3 from '../../utils/images/logoTATA3.png';
 import logoApp from '../../utils/images/logoApp.png';
 import logoKGP2 from '../../utils/images/logoKGP2.png';
 import Profile from '../../utils/images/profile.png';
@@ -42,6 +38,7 @@ import back from '../../utils/images/back.png';
 import profileEdit from '../../utils/images/profileEdit.png';
 import logoTATA2 from '../../utils/images/logoTATA2.png';
 import pencil from '../../utils/images/pencil.png';
+import iTTText from '../../utils/images/iTTText.png';
 
 // import GoodVibes from "../../../assets/fonts/GreatVibes-Regular.ttf";
 import {URI} from '@env';
@@ -55,7 +52,12 @@ import {URI} from '@env';
 // });
 
 const Home = ({navigation}) => {
+  const {height, width} = useWindowDimensions();
   const [data, setData] = useState(null);
+  const [tableData, setTableData] = useState([]);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [firstname, setFirstname] = useState('');
+  const [lastname, setLastname] = useState('');
 
   //   const [fontsLoaded] = useFonts({
   //     allura,
@@ -71,83 +73,6 @@ const Home = ({navigation}) => {
   const creden = useSelector(state => state.creden.creden);
 
   console.log('URI:', URI);
-
-  //posting by axios
-  const handleLogin = async values => {
-    try {
-      // Check if email and password are provided
-      if (!values.email || !values.password) {
-        // Show an alert if either email or password is missing
-        alert('Please enter both email and password.');
-        return;
-      }
-      // Serialize the values object to plain JavaScript object
-      const serializedValues = JSON.parse(JSON.stringify(values));
-
-      const formData = new URLSearchParams();
-      formData.append('grant_type', '');
-      // formData.append("username", values.email);
-      formData.append('username', 'lemon');
-      // formData.append("password", values.password);
-      formData.append('password', 'tangy');
-      formData.append('scope', '');
-      formData.append('client_id', '');
-      formData.append('client_secret', '');
-
-      console.log('Login Information:', formData);
-
-      const response = await axios.post(
-        creden.URI + '/login/',
-        formData.toString(),
-        {
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        },
-      );
-
-      // Assuming the server responds with a token
-      const token = response.data.access_token;
-      dispatch(setTokenGlobal(token));
-
-      // Handle the token as needed (e.g., store it in a secure location)
-      console.log('Login successful! token:', globalToken);
-
-      // Navigate to the next screen after successful login
-      navigation.navigate('Vmodel');
-    } catch (error) {
-      console.error('Error during login:', error.message);
-      // Check if the error is due to invalid credentials (unauthorized)
-      if (error.response && error.response.status === 401) {
-        alert('Invalid username or password. Please try again.');
-      } else {
-        // Handle other types of errors as needed
-        alert('Invalid credentials. Please try again.');
-      }
-      // Handle the error as needed (e.g., show an error message to the user)
-    }
-  };
-
-  // const handleLogin = (values) => {
-  //   try {
-
-  // // Check if email and password are provided
-  // if (!values.email || !values.password) {
-  //   // Show an alert if either email or password is missing
-  //   alert("Please enter both email and password.");
-  //   return;
-  // }
-  //     // Log the extracted login information to the console
-  //     console.log("Login Information:", values);
-
-  //     // Navigate to the next screen after successful login
-  //     navigation.navigate("Vmodel");
-  //   } catch (error) {
-  //     console.error("Error during login:", error.message);
-  //     // Handle the error as needed (e.g., show an error message to the user)
-  //   }
-  // };
 
   const endpoint = creden.URI + '/whoami/';
 
@@ -172,36 +97,136 @@ const Home = ({navigation}) => {
       console.log('Data:', data);
       // console.log("photo path:", `${URI + data.photo_path}`);
     } catch (error) {
-      console.error('Error:', error);
+      //Handle the error response
+      if (error.response && error.response.status === 403) {
+        console.error(error.response.data.detail);
+        async () => {
+          try {
+            const response = await axios.post(
+              `${creden.URI + '/logout'}?token=${globalToken}`,
+            );
+            dispatch(
+              setCreden({
+                ticket: null,
+                URI: creden.URI,
+                WS_URI: creden.WS_URI,
+                RTMP_URI: creden.RTMP_URI,
+              }),
+            );
+            console.log('Logout successful', response.data);
+          } catch (error) {
+            console.error('Error logging out', error);
+          }
+        },
+          // Show an alert and navigate to the login page
+          Alert.alert(
+            'Invalid Credentials',
+            'Your shift has ended. Please log in again to continue.',
+            [
+              {
+                text: 'OK',
+                onPress: () =>
+                  navigation.navigate('LoginNav', {screen: 'Login'}), // Navigate to the login page
+              },
+            ],
+            {cancelable: false},
+          );
+      } else {
+        console.error('Error fetching data from profile:', error);
+      }
     }
   };
+
+  const updateProfile = async () => {
+    if (!firstname || !lastname) {
+      Alert.alert('Alert', 'Please enter your first and last name');
+      return;
+    }
+    const ticket = await AsyncStorage.getItem('ticket');
+    try {
+      const response = await axios.put(
+        `${creden.URI + '/user_update/'}`,
+        {
+          ticket_no: ticket,
+          first_name: firstname,
+          last_name: lastname,
+        },
+        {
+          headers: {
+            accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+      console.log('profile updated', response.data);
+      setIsModalVisible(false);
+      setFirstname('');
+      setLastname('');
+      makeRequest();
+    } catch (error) {
+      console.error('Error updating profile', error);
+    }
+  };
+
   useEffect(() => {
     // Call the function to make the request
     makeRequest();
   }, []);
-  const BottomTabLeftFunc = () => {
-    navigation.navigate('AboutCoEAMT');
-  };
-  const BottomTabRightFunc = () => {
-    navigation.navigate('AboutApp');
-  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const data = await AsyncStorage.getItem('ticket');
+      try {
+        const response = await axios.get(
+          `${creden.URI}/records_query/wheel_record_last_edited_by/`,
+          {
+            params: {
+              query: data,
+              token: globalToken,
+            },
+            headers: {
+              accept: 'application/json',
+            },
+          },
+        );
+        console.log('Response last edited by:', response.data);
+        const formattedData = response.data.cars.map(car => ({
+          tin: car.axles_data.wheels_data.tin,
+          vin: car.vin,
+        }));
+        console.log('Formatted data:', formattedData);
+        setTableData(formattedData);
+      } catch (error) {
+        console.error('Error fetching data', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+  // const BottomTabLeftFunc = () => {
+  //   navigation.navigate('AboutCoEAMT');
+  // };
+  // const BottomTabRightFunc = () => {
+  //   navigation.navigate('AboutApp');
+  // };
   return (
     <SafeAreaView style={styles.safeContainer}>
       <StatusBar />
 
       <View style={styles.linearGradient}>
         <ImageBackground
-          source={backgroundImage}
+          source={backgroundImage2}
           style={styles.imageBackground}>
           <View
             style={{
               // flex: 1,
               flexDirection: 'row',
               justifyContent: 'space-between',
+              alignItems: 'center',
               height: 100,
               width: '100%',
               // backgroundColor: "#31367b",
-              // backgroundColor: "red",
+              // backgroundColor: 'red',
               borderBottomLeftRadius: 40,
               borderBottomRightRadius: 40,
             }}>
@@ -224,6 +249,9 @@ const Home = ({navigation}) => {
                 height: '100%',
                 justifyContent: 'center',
                 alignItems: 'center',
+                right: width / 3, //repeat this step
+                alignSelf: 'center',
+                top: 50,
               }}
               // onPress={() => navigation.navigate("Profile")}
               //   onPress={() => navigation.navigate('Login')}
@@ -237,7 +265,7 @@ const Home = ({navigation}) => {
                 }}
               />
             </TouchableOpacity>
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={{
                 width: '33%',
                 height: '100%',
@@ -246,7 +274,7 @@ const Home = ({navigation}) => {
               }}
               onPress={() => navigation.navigate('AboutApp')}>
               <Image source={question} style={{width: 25, height: 23}} />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
 
           {/* <Animated.Text
@@ -254,6 +282,10 @@ const Home = ({navigation}) => {
             style={styles.text1}>
             User profile
           </Animated.Text> */}
+          <Image
+            source={iTTText}
+            style={{resizeMode: 'contain', width: 250, top: 12}}
+          />
           <Text style={styles.text1}> User profile</Text>
           <View
             style={{
@@ -262,13 +294,15 @@ const Home = ({navigation}) => {
               borderRadius: 100,
               borderWidth: 3,
               borderColor: '#d9d9d9',
-              top: 95,
+              top: 30,
               backgroundColor: '#3758ff',
+              // backgroundColor: '#990000',
               justifyContent: 'center',
               alignItems: 'center',
             }}>
             <TouchableOpacity
-              style={{position: 'absolute', left: 120, top: 10}}>
+              style={{position: 'absolute', left: 120, top: 10}}
+              onPress={() => setIsModalVisible(!isModalVisible)}>
               <Image source={pencil} />
             </TouchableOpacity>
 
@@ -297,19 +331,19 @@ const Home = ({navigation}) => {
             </Animated.Text> */}
           {/* <Text style={{ fontFamily: "Allura_400Regular", fontSize: 25, color: "#fff" }}> */}
 
-          <Text style={{fontSize: 30, top: 120, color: 'black'}}>
+          <Text style={{fontSize: 30, top: 30, color: 'black'}}>
             {data && data.first_name && data.last_name
               ? data.first_name + ' ' + data.last_name
               : 'Username not available'}
           </Text>
           <View
             style={{
-              top: 150,
+              top: 30,
               flexDirection: 'column',
               justifyContent: 'flex-start',
               alignItems: 'flex-start',
             }}>
-            <View
+            {/* <View
               style={{
                 flexDirection: 'row',
                 justifyContent: 'center',
@@ -328,7 +362,7 @@ const Home = ({navigation}) => {
                 {' '}
                 {data && data.email ? data.email : 'Email not available'}
               </Text>
-            </View>
+            </View> */}
             <View
               style={{
                 top: 10,
@@ -351,14 +385,246 @@ const Home = ({navigation}) => {
               </Text>
             </View>
           </View>
+          <View
+            style={{
+              height: 30,
+              // backgroundColor: 'red',
+              width: '100%',
+              height: 200,
+              top: 60,
+              alignItems: 'center',
+            }}>
+            {/* <ScrollView style={styles.container}>
+            <DataTable>
+              <DataTable.Header>
+                <DataTable.Title sortDirection="descending">
+                  TIN
+                </DataTable.Title>
+                <DataTable.Title>VIN</DataTable.Title>
+              </DataTable.Header>
+              {tableData.map((row, index) => (
+                <DataTable.Row key={index}>
+                  <DataTable.Cell>{row.tin}</DataTable.Cell>
+                  <DataTable.Cell>{row.vin}</DataTable.Cell>
+                </DataTable.Row>
+              ))}
+            </DataTable>
+          </ScrollView> */}
+            <View
+              style={{
+                flex: 1,
+                width: '90%',
+                padding: 12,
+                backgroundColor: '#3758ff',
+                justifyContent: 'center',
+                // alignItems: 'center',
+                borderRadius: 15,
+              }}>
+              <Text
+                style={{
+                  color: '#fff',
+                  fontWeight: 'bold',
+                  fontSize: 20,
+                  alignSelf: 'center',
+                  textDecorationLine: 'underline',
+                }}>
+                ACTIVITY LOG
+              </Text>
+              {tableData?.length > 0 ? (
+                <>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      borderBottomWidth: 1,
+                      borderBottomColor: '#c8e1ff',
+                      paddingBottom: 8,
+                      marginBottom: 8,
+                      marginTop: 10,
+                    }}>
+                    <Text style={{flex: 1, fontWeight: 'bold'}}>
+                      Last scanned TIN
+                    </Text>
+                    <Text style={{flex: 1, fontWeight: 'bold'}}>
+                      Last scanned VIN
+                    </Text>
+                  </View>
+                  <FlatList
+                    data={tableData}
+                    keyExtractor={(item, index) => index.toString()}
+                    renderItem={({item}) => (
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          borderBottomWidth: 1,
+                          borderBottomColor: '#c8e1ff',
+                          paddingVertical: 8,
+                        }}>
+                        <Text style={{flex: 1, textAlign: 'left'}}>
+                          {item.tin}
+                        </Text>
+                        <Text style={{flex: 1, textAlign: 'left'}}>
+                          {item.vin}
+                        </Text>
+                      </View>
+                    )}
+                  />
+                </>
+              ) : (
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}>
+                  <Text style={{fontWeight: 'bold', fontSize: 20}}>
+                    No recorded activity
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
         </ImageBackground>
       </View>
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={() => setIsModalVisible(false)}>
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            // backgroundColor: "red",
+          }}>
+          <View
+            style={{
+              backgroundColor: 'white',
+              padding: 20,
+              borderRadius: 10,
+              elevation: 5,
+              justifyContent: 'center',
+              alignItems: 'center',
+              width: '80%',
+
+              minHeight: 260,
+              height: '35%',
+            }}>
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: 'bold',
+                marginBottom: 10,
+                color: 'black',
+              }}>
+              Enter details
+            </Text>
+
+            <View
+              style={{
+                margin: 20,
+                marginBottom: 5,
+                flexDirection: 'row',
+                justifyContent: 'space-evenly',
+                width: 220,
+                height: 40,
+                // top: 160,
+                borderRadius: 12,
+                borderWidth: 1.5,
+                // borderColor: '#3758ff',
+                borderColor: '#0f113e',
+                //   justifyContent: "center",
+                alignItems: 'center',
+                //   zIndex: 2,
+                //   backgroundColor: "red",
+              }}
+              // onPress={() => navigation.navigate("Vmodel")}
+            >
+              {/* <Image
+                  source={id}
+                  style={{ resizeMode: "contain", height: 30, width: 30 }}
+                ></Image> */}
+              <View>
+                <TextInput
+                  placeholder="First name"
+                  placeholderTextColor="grey"
+                  style={{height: 40, width: 180, color: 'black'}}
+                  value={firstname}
+                  onChangeText={text => setFirstname(text)}
+                />
+              </View>
+            </View>
+            <View
+              style={{
+                margin: 10,
+                marginBottom: 5,
+                flexDirection: 'row',
+                justifyContent: 'space-evenly',
+                width: 220,
+                height: 40,
+                // top: 160,
+                borderRadius: 12,
+                borderWidth: 1.5,
+                // borderColor: '#3758ff',
+                borderColor: '#0f113e',
+                //   justifyContent: "center",
+                alignItems: 'center',
+                //   zIndex: 2,
+                //   backgroundColor: "red",
+              }}
+              // onPress={() => navigation.navigate("Vmodel")}
+            >
+              {/* <Image
+                  source={id}
+                  style={{ resizeMode: "contain", height: 30, width: 30 }}
+                ></Image> */}
+              <View>
+                <TextInput
+                  placeholder="Last name"
+                  placeholderTextColor="grey"
+                  style={{height: 40, width: 180, color: 'black'}}
+                  value={lastname}
+                  onChangeText={text => setLastname(text)}
+                />
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={{
+                width: 190,
+                height: 40,
+                marginTop: 25,
+                borderRadius: 12,
+                // borderWidth: 3,
+                // borderColor: "#3758ff",
+                justifyContent: 'center',
+                alignItems: 'center',
+                zIndex: 2,
+                // backgroundColor: '#3758ff',
+                backgroundColor: 'darkgreen',
+              }}
+              onPress={updateProfile}>
+              <Text
+                style={{
+                  color: '#fff',
+                  fontWeight: 'bold',
+                  fontSize: 17,
+                  letterSpacing: 1,
+                }}>
+                Submit
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       <Tabs
-        left={doc}
-        center={logoTATA2}
-        right={question}
-        tabLeftFunc={BottomTabLeftFunc}
-        tabRightFunc={BottomTabRightFunc}
+        // left={doc}
+        center={logoKGP2}
+        right={doc}
+        // tabLeftFunc={BottomTabLeftFunc}
+        // tabRightFunc={BottomTabRightFunc}
       />
     </SafeAreaView>
   );
@@ -371,6 +637,12 @@ const styles = StyleSheet.create({
     flex: 1,
     // backgroundColor: "#ffc0c8",
     // backgroundColor: "#ffe9ec",
+  },
+  container: {
+    // height: '20%',
+    // flex: 1,
+    // padding: 16,
+    // backgroundColor: 'red',
   },
 
   linearGradient: {
@@ -392,7 +664,7 @@ const styles = StyleSheet.create({
   },
   text1: {
     // position: "absolute",
-    top: 70,
+    top: 25,
     color: '#d9d9d9',
     fontSize: 20,
     fontWeight: 'bold',
