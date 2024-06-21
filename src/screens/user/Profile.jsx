@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import React, {useState, useEffect} from 'react';
 import {DataTable} from 'react-native-paper';
+import DatePicker from 'react-native-modern-datepicker';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useSelector, useDispatch} from 'react-redux';
@@ -39,6 +40,7 @@ import profileEdit from '../../utils/images/profileEdit.png';
 import logoTATA2 from '../../utils/images/logoTATA2.png';
 import pencil from '../../utils/images/pencil.png';
 import iTTText from '../../utils/images/iTTText.png';
+import calendar from '../../utils/images/calendar.png';
 
 // import GoodVibes from "../../../assets/fonts/GreatVibes-Regular.ttf";
 import {URI} from '@env';
@@ -52,12 +54,35 @@ import {URI} from '@env';
 // });
 
 const Home = ({navigation}) => {
+  const getCurrentDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    // console.log('Current date:', `${year}/${month}/${day}`);
+    return `${year}/${month}/${day}`;
+  };
+
+  // const getTomorrowDate = () => {
+  //   const today = new Date();
+  //   const tomorrow = new Date(today);
+  //   tomorrow.setDate(today.getDate() + 1);
+  //   const year = tomorrow.getFullYear();
+  //   const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+  //   const day = String(tomorrow.getDate()).padStart(2, '0');
+  //   return `${year}/${month}/${day}`;
+  // };
+
   const {height, width} = useWindowDimensions();
   const [data, setData] = useState(null);
   const [tableData, setTableData] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [firstname, setFirstname] = useState('');
   const [lastname, setLastname] = useState('');
+  const [isCalenderVisible, setIsCalenderVisible] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(getCurrentDate());
+  const [totalTinCount, setTotalTinCount] = useState(0);
+  const [uniqueVinCount, setUniqueVinCount] = useState(0);
 
   //   const [fontsLoaded] = useFonts({
   //     allura,
@@ -71,8 +96,6 @@ const Home = ({navigation}) => {
   const dispatch = useDispatch();
   const globalToken = useSelector(state => state.token.tokenGlobal);
   const creden = useSelector(state => state.creden.creden);
-
-  console.log('URI:', URI);
 
   const endpoint = creden.URI + '/whoami/';
 
@@ -168,47 +191,115 @@ const Home = ({navigation}) => {
     }
   };
 
-  useEffect(() => {
-    // Call the function to make the request
-    makeRequest();
-  }, []);
+  //Fetch list of all the tin and vin scanned by the user
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     const data = await AsyncStorage.getItem('ticket');
+  //     try {
+  //       const response = await axios.get(
+  //         `${creden.URI}/records_query/wheel_record_last_edited_by/`,
+  //         {
+  //           params: {
+  //             query: data,
+  //             token: globalToken,
+  //           },
+  //           headers: {
+  //             accept: 'application/json',
+  //           },
+  //         },
+  //       );
+  //       console.log('Response last edited by:', response.data);
+  //       const formattedData = response.data.cars.map(car => ({
+  //         tin: car.axles_data.wheels_data.tin,
+  //         vin: car.vin,
+  //       }));
+  //       console.log('Formatted data:', formattedData);
+  //       setTableData(formattedData);
+  //     } catch (error) {
+  //       console.error('Error fetching data', error);
+  //     }
+  //   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const data = await AsyncStorage.getItem('ticket');
-      try {
-        const response = await axios.get(
-          `${creden.URI}/records_query/wheel_record_last_edited_by/`,
-          {
-            params: {
-              query: data,
-              token: globalToken,
-            },
-            headers: {
-              accept: 'application/json',
-            },
-          },
-        );
-        console.log('Response last edited by:', response.data);
-        const formattedData = response.data.cars.map(car => ({
-          tin: car.axles_data.wheels_data.tin,
-          vin: car.vin,
-        }));
-        console.log('Formatted data:', formattedData);
-        setTableData(formattedData);
-      } catch (error) {
-        console.error('Error fetching data', error);
-      }
-    };
+  //   fetchData();
+  // }, []);
 
-    fetchData();
-  }, []);
   // const BottomTabLeftFunc = () => {
   //   navigation.navigate('AboutCoEAMT');
   // };
   // const BottomTabRightFunc = () => {
   //   navigation.navigate('AboutApp');
   // };
+
+  const filterDataByDate = (cars, date) => {
+    // console.log('date', date);
+    // const dateNumber = parseInt(date.replace(/-/g, '')); // Convert date to YYYYMMDD format and then to a number
+    // Extract the year, month, and day parts from the date string
+    const [year, month, day] = date.split('/');
+
+    // Convert to YYYYMMDD format
+    const dateNumber = parseInt(`${year}${month}${day}`);
+    console.log('Date number:', dateNumber);
+    return cars.filter(
+      car => car.axles_data.wheels_data.scn_compound === dateNumber,
+    );
+  };
+
+  const fetchDataForSelectedDate = async selectedDate => {
+    const ticket = await AsyncStorage.getItem('ticket');
+    try {
+      const response = await axios.get(
+        `${creden.URI}/records_query/wheel_record_last_edited_by/`,
+        {
+          params: {
+            query: ticket,
+            token: globalToken,
+          },
+          headers: {
+            accept: 'application/json',
+          },
+        },
+      );
+      console.log('Response for selected date:', response.data);
+      const filteredData = filterDataByDate(response.data.cars, selectedDate);
+      const formattedData = filteredData.map(car => ({
+        tin: car.axles_data.wheels_data.tin,
+        vin: car.vin,
+      }));
+
+      // Calculate total number of TINs and unique VINs
+      const totalTinCount = formattedData.length;
+      const uniqueVinCount = new Set(formattedData.map(item => item.vin)).size;
+
+      setTableData(formattedData);
+      setTotalTinCount(totalTinCount);
+      setUniqueVinCount(uniqueVinCount);
+
+      console.log('Formatted data:', formattedData);
+      console.log('Total TIN count:', totalTinCount);
+      console.log('Unique VIN count:', uniqueVinCount);
+    } catch (error) {
+      console.error('Error fetching data', error);
+    }
+  };
+
+  const handleDateChange = date => {
+    console.log('Selected date:', date);
+    setSelectedDate(date);
+    setIsCalenderVisible(false);
+    fetchDataForSelectedDate(date);
+  };
+
+  useEffect(() => {
+    // Call the function to make the request
+    makeRequest();
+  }, []);
+
+  useEffect(() => {
+    if (selectedDate) {
+      fetchDataForSelectedDate(selectedDate);
+    }
+  }, [selectedDate]);
+
   return (
     <SafeAreaView style={styles.safeContainer}>
       <StatusBar />
@@ -414,61 +505,203 @@ const Home = ({navigation}) => {
               style={{
                 flex: 1,
                 width: '90%',
-                padding: 12,
+                padding: 10,
                 backgroundColor: '#3758ff',
-                justifyContent: 'center',
+                // justifyContent: 'center',
                 // alignItems: 'center',
                 borderRadius: 15,
+                // height: 300,
               }}>
-              <Text
+              <View
                 style={{
-                  color: '#fff',
-                  fontWeight: 'bold',
-                  fontSize: 20,
-                  alignSelf: 'center',
-                  textDecorationLine: 'underline',
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  // backgroundColor: 'black',
                 }}>
-                ACTIVITY LOG
-              </Text>
+                <Text
+                  style={{
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: 20,
+                    alignSelf: 'center',
+                    textDecorationLine: 'underline',
+                    left: 15,
+                  }}>
+                  ACTIVITY LOG
+                </Text>
+                <TouchableOpacity
+                  style={{
+                    // postition: 'absolute',
+                    zIndex: 1,
+                    // backgroundColor: 'red',
+                    left: 80,
+                  }}
+                  onPress={() => setIsCalenderVisible(!isCalenderVisible)}>
+                  <Image
+                    style={{
+                      resizeMode: 'contain',
+                      height: 30,
+                      width: 30,
+                      // left: 10,
+                    }}
+                    source={calendar}
+                  />
+                </TouchableOpacity>
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'flex-start',
+                  alignItems: 'center',
+                  // backgroundColor: 'red',
+                  borderBottomColor: '#fff',
+                  borderBottomWidth: 2,
+                }}>
+                {/* <Text
+                  style={{
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: 12,
+                    alignSelf: 'flex-end',
+                  }}>
+                  as on 
+                </Text> */}
+                <Text
+                  style={{
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: 12,
+                    alignSelf: 'flex-start',
+                  }}>
+                  {selectedDate === getCurrentDate() ? 'TODAY' : selectedDate}
+                </Text>
+              </View>
+
               {tableData?.length > 0 ? (
                 <>
                   <View
                     style={{
+                      marginTop: 10,
                       flexDirection: 'row',
                       justifyContent: 'space-between',
-                      borderBottomWidth: 1,
-                      borderBottomColor: '#c8e1ff',
-                      paddingBottom: 8,
-                      marginBottom: 8,
-                      marginTop: 10,
+                      borderWidth: 1,
+                      borderColor: '#fff',
+                      padding: 2,
+                      height: 30,
+                      alignItems: 'center',
                     }}>
-                    <Text style={{flex: 1, fontWeight: 'bold'}}>
-                      Last scanned TIN
+                    <Text style={{fontSize: 14, fontWeight: 'bold'}}>
+                      Total tyres scanned:
                     </Text>
-                    <Text style={{flex: 1, fontWeight: 'bold'}}>
-                      Last scanned VIN
+                    <Text
+                      style={{
+                        fontSize: 16,
+                        fontWeight: 'bold',
+                        color: '#fff',
+                      }}>
+                      {totalTinCount}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 'bold',
+                        borderLeftWidth: 1,
+                        borderLeftColor: '#fff',
+                        paddingLeft: 5,
+                      }}>
+                      Total vehicles scanned:
+                    </Text>
+                    <Text
+                      style={{fontSize: 16, fontWeight: 'bold', color: '#fff'}}>
+                      {uniqueVinCount}
                     </Text>
                   </View>
-                  <FlatList
-                    data={tableData}
-                    keyExtractor={(item, index) => index.toString()}
-                    renderItem={({item}) => (
-                      <View
+                  <View
+                    style={{
+                      // backgroundColor: 'red',
+                      marginTop: 10,
+                      padding: 4,
+                      borderWidth: 0.5,
+                      borderColor: '#fff',
+                      height: 85,
+                    }}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        borderBottomWidth: 1,
+                        borderBottomColor: '#c8e1ff',
+                        paddingBottom: 8,
+                        marginBottom: 8,
+                        // marginTop: 10,
+                        // backgroundColor: '#0f103e',
+                      }}>
+                      {/* <Text
                         style={{
-                          flexDirection: 'row',
-                          borderBottomWidth: 1,
-                          borderBottomColor: '#c8e1ff',
-                          paddingVertical: 8,
+                          flex: 1,
+                          fontWeight: 'bold',
+                          textAlign: 'center',
+                          fontSize: 13,
                         }}>
-                        <Text style={{flex: 1, textAlign: 'left'}}>
-                          {item.tin}
-                        </Text>
-                        <Text style={{flex: 1, textAlign: 'left'}}>
-                          {item.vin}
-                        </Text>
-                      </View>
-                    )}
-                  />
+                        Sl no.
+                      </Text> */}
+                      <Text
+                        style={{
+                          flex: 4,
+                          fontWeight: 'bold',
+                          textAlign: 'center',
+                        }}>
+                        Last scanned TIN
+                      </Text>
+                      <Text
+                        style={{
+                          flex: 4,
+                          fontWeight: 'bold',
+                          textAlign: 'center',
+                        }}>
+                        Last scanned VIN
+                      </Text>
+                    </View>
+                    <FlatList
+                      // data={tableData}
+                      data={tableData.slice(0, 1)}
+                      keyExtractor={(item, index) => index.toString()}
+                      renderItem={({item, index}) => (
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            borderBottomWidth: 1,
+                            borderBottomColor: '#c8e1ff',
+                            paddingVertical: 8,
+                          }}>
+                          {/* <Text style={{flex: 1, textAlign: 'left'}}>
+                            {index + 1}
+                          </Text> */}
+                          <Text
+                            style={{
+                              flex: 6,
+                              textAlign: 'center',
+                              // marginLeft: 7,
+                              fontSize: 13,
+                              color: '#fff',
+                            }}>
+                            {item.tin}
+                          </Text>
+                          <Text
+                            style={{
+                              flex: 6,
+                              textAlign: 'center',
+                              fontSize: 13,
+                              color: '#fff',
+                            }}>
+                            {item.vin}
+                          </Text>
+                        </View>
+                      )}
+                    />
+                  </View>
                 </>
               ) : (
                 <View
@@ -616,6 +849,44 @@ const Home = ({navigation}) => {
                 Submit
               </Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={isCalenderVisible}>
+        <View
+          style={{
+            flex: 1,
+            // backgroundColor: '#fff',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+          <View
+            style={{
+              margin: 20,
+              backgroundColor: 'white',
+              borderRadius: 20,
+              width: '90%',
+              padding: 35,
+              alignItems: 'center',
+              shadowColor: '#000',
+              shadowOffset: {
+                width: 0,
+                height: 2,
+              },
+              shadowOpacity: 0.25,
+              shadowRadius: 4,
+              elevation: 5,
+            }}>
+            <DatePicker
+              mode="calender"
+              selected={selectedDate}
+              onDateChange={handleDateChange}
+              current={selectedDate}
+              maximumDate={getCurrentDate()}
+            />
           </View>
         </View>
       </Modal>
