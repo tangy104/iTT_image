@@ -18,7 +18,8 @@ import Login from '../src/screens/login/Login';
 import ScanVIN from '../src/screens/scanVIN/ScanVIN';
 import VinCamera from '../src/screens/camera/VinCamera';
 import NewSmodel from '../src/screens/smodel/NewSModel';
-import CameraScreen from '../src/screens/camera/CameraScreen';
+// import CameraScreen from '../src/screens/camera/CameraScreen';
+import CameraScreenImg from '../src/screens/camera/CameraScreenImg';
 import AboutApp from '../src/screens/about/AboutApp';
 import AboutCoEAMT from '../src/screens/about/AboutCoEAMT';
 import Profile from '../src/screens/user/Profile';
@@ -56,7 +57,7 @@ const StackNav = () => {
       <Stack.Screen name="ScanVIN" component={ScanVIN} />
       <Stack.Screen name="VinCamera" component={VinCamera} />
       <Stack.Screen name="NewSmodel" component={NewSmodel} />
-      <Stack.Screen name="CameraScreen" component={CameraScreen} />
+      <Stack.Screen name="CameraScreen" component={CameraScreenImg} />
       <Stack.Screen name="AboutApp" component={AboutApp} />
       <Stack.Screen name="AboutCoEAMT" component={AboutCoEAMT} />
       <Stack.Screen name="Profile" component={Profile} />
