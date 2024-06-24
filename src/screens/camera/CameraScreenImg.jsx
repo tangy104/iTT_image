@@ -16,7 +16,7 @@ import {useSelector, useDispatch} from 'react-redux';
 import {setTinGlobal} from '../../state/tinslice';
 import {setCreden} from '../../state/credenSlice';
 import {active, inactive} from '../../state/alertSlice';
-import {ApiVideoLiveStreamView} from '@api.video/react-native-livestream';
+// import {ApiVideoLiveStreamView} from '@api.video/react-native-livestream';
 // import {Camera, CameraType} from 'expo-camera';
 import {CameraView, useCameraPermissions} from 'expo-camera';
 import {
@@ -24,7 +24,6 @@ import {
   PinchGestureHandler,
   State,
 } from 'react-native-gesture-handler';
-import * as MediaLibrary from 'expo-media-library';
 import DeviceInfo from 'react-native-device-info';
 import axios from 'axios';
 
@@ -173,13 +172,12 @@ const CameraScreen = ({navigation, route}) => {
     fetchDeviceId();
   }, []);
 
-  //   useEffect(() => {
-  //     (async () => {
-  //       MediaLibrary.requestPermissionsAsync();
-  //       const cameraStatus = await Camera.requestCameraPermissionsAsync();
-  //       setHasCameraPermission(cameraStatus.status === 'granted');
-  //     })();
-  //   }, []);
+  useEffect(() => {
+    (async () => {
+      const cameraStatus = await Camera.requestCameraPermissionsAsync();
+      setHasCameraPermission(cameraStatus.status === 'granted');
+    })();
+  }, []);
 
   const requestPermissionAgain = () => {
     Linking.openSettings();
@@ -252,6 +250,7 @@ const CameraScreen = ({navigation, route}) => {
         } else if (error.request) {
           // Request was made but no response received
           console.log('Error request:', error.request);
+          setHeaders('No serial number detected');
         } else {
           // Something else happened in setting up the request
           console.log('Error message:', error.message);
@@ -563,6 +562,7 @@ const CameraScreen = ({navigation, route}) => {
                           // dispatch(setTinGlobal(headers['output']));
                           setGotResponse(false);
                           setImage(null);
+                          setHeaders(null);
                         }}>
                         <Text
                           style={{
@@ -594,6 +594,7 @@ const CameraScreen = ({navigation, route}) => {
                           setEnableManualInput(!enableManualInput);
                           setGotResponse(false);
                           setImage(null);
+                          setHeaders(null);
                         }}>
                         <Text
                           style={{
@@ -751,7 +752,7 @@ const CameraScreen = ({navigation, route}) => {
                 // flashMode={flash}>
                 flash={'off'}
                 animateShutter={false}
-                enableTorch={torch}
+                enableTorch={false}
                 zoom={zoom}>
                 <View style={{position: 'relative', top: '85%'}}>
                   <TouchableOpacity
