@@ -3,14 +3,15 @@ import {TouchableOpacity, View, Image, Modal} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useRoute, useFocusEffect} from '@react-navigation/native';
 import {WebView} from 'react-native-webview';
+import {s, vs, ms, ScaledSheet} from 'react-native-size-matters';
 
 const ProgressBar = ({progress}) => {
   return (
     <View
       style={{
-        height: 4,
+        height: vs(3),
         backgroundColor: '#e0e0e0',
-        borderRadius: 2,
+        borderRadius: ms(2),
         overflow: 'hidden',
       }}>
       <View
@@ -82,12 +83,12 @@ const Tabs = props => {
         style={{
           flexDirection: 'row',
           justifyContent: 'space-evenly',
-          height: 70,
+          height: vs(55),
           width: '100%',
           // backgroundColor: '#31367b',
           backgroundColor: '#0f113e',
-          borderTopLeftRadius: 40,
-          borderTopRightRadius: 40,
+          borderTopLeftRadius: s(35),
+          borderTopRightRadius: s(35),
           zIndex: 2,
         }}>
         {/* Left button */}
@@ -99,7 +100,7 @@ const Tabs = props => {
             alignItems: 'center',
           }}
           onPress={props.tabLeftFunc}>
-          <Image source={props.left} style={{width: 30, height: 30}} />
+          <Image source={props.left} style={{width: s(28), height: s(28)}} />
         </TouchableOpacity>
 
         {/* Center button */}
@@ -127,8 +128,8 @@ const Tabs = props => {
             style={{
               resizeMode: 'contain',
               // top: -34,
-              top: -18,
-              width: currentScreenName === 'Home' ? 90 : 85,
+              top: vs(-18),
+              width: currentScreenName === 'Home' ? s(80) : s(75),
             }}
           />
         </TouchableOpacity>
@@ -142,7 +143,7 @@ const Tabs = props => {
             alignItems: 'center',
           }}
           onPress={props.tabRightFunc}>
-          <Image source={props.right} style={{width: 30, height: 30}} />
+          <Image source={props.right} style={{width: s(28), height: s(28)}} />
         </TouchableOpacity>
       </View>
 

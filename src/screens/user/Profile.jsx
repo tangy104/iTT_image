@@ -15,6 +15,7 @@ import {
   Modal,
 } from 'react-native';
 import React, {useState, useEffect} from 'react';
+import {vs, s, ms, ScaledSheet} from 'react-native-size-matters';
 import {DataTable} from 'react-native-paper';
 import DatePicker from 'react-native-modern-datepicker';
 import axios from 'axios';
@@ -314,12 +315,12 @@ const Home = ({navigation}) => {
               flexDirection: 'row',
               justifyContent: 'space-between',
               alignItems: 'center',
-              height: 100,
+              height: vs(100),
               width: '100%',
               // backgroundColor: "#31367b",
               // backgroundColor: 'red',
-              borderBottomLeftRadius: 40,
-              borderBottomRightRadius: 40,
+              borderBottomLeftRadius: s(40),
+              borderBottomRightRadius: s(40),
             }}>
             <TouchableOpacity
               style={{
@@ -331,7 +332,7 @@ const Home = ({navigation}) => {
               onPress={() => navigation.goBack()}>
               <Image
                 source={back}
-                style={{resizeMode: 'contain', width: 26, height: 27}}
+                style={{resizeMode: 'contain', width: s(26), height: vs(27)}}
               />
             </TouchableOpacity>
             <TouchableOpacity
@@ -342,7 +343,7 @@ const Home = ({navigation}) => {
                 alignItems: 'center',
                 right: width / 3, //repeat this step
                 alignSelf: 'center',
-                top: 50,
+                top: vs(40),
               }}
               // onPress={() => navigation.navigate("Profile")}
               //   onPress={() => navigation.navigate('Login')}
@@ -351,8 +352,8 @@ const Home = ({navigation}) => {
                 source={logoApp}
                 style={{
                   resizeMode: 'contain',
-                  width: 100,
-                  height: 90,
+                  width: s(100),
+                  height: vs(90),
                 }}
               />
             </TouchableOpacity>
@@ -375,24 +376,24 @@ const Home = ({navigation}) => {
           </Animated.Text> */}
           <Image
             source={iTTText}
-            style={{resizeMode: 'contain', width: 250, top: 12}}
+            style={{resizeMode: 'contain', width: s(250), top: vs(12)}}
           />
           <Text style={styles.text1}> User profile</Text>
           <View
             style={{
-              height: 150,
-              width: 150,
-              borderRadius: 100,
+              height: s(140),
+              width: s(140),
+              borderRadius: ms(100),
               borderWidth: 3,
               borderColor: '#d9d9d9',
-              top: 30,
+              top: vs(30),
               backgroundColor: '#3758ff',
               // backgroundColor: '#990000',
               justifyContent: 'center',
               alignItems: 'center',
             }}>
             <TouchableOpacity
-              style={{position: 'absolute', left: 120, top: 10}}
+              style={{position: 'absolute', left: s(110), top: vs(10)}}
               onPress={() => setIsModalVisible(!isModalVisible)}>
               <Image source={pencil} />
             </TouchableOpacity>
@@ -407,9 +408,9 @@ const Home = ({navigation}) => {
                 resizeMode: 'cover',
                 flex: data && data.photo_path ? 1 : 0,
                 zIndex: -1,
-                borderRadius: 100,
-                width: data && data.photo_path ? 144 : 80,
-                height: data && data.photo_path ? 144 : 80,
+                borderRadius: ms(100),
+                width: data && data.photo_path ? s(144) : s(80),
+                height: data && data.photo_path ? s(144) : s(80),
               }}
             />
           </View>
@@ -422,14 +423,14 @@ const Home = ({navigation}) => {
             </Animated.Text> */}
           {/* <Text style={{ fontFamily: "Allura_400Regular", fontSize: 25, color: "#fff" }}> */}
 
-          <Text style={{fontSize: 30, top: 30, color: 'black'}}>
+          <Text style={{fontSize: ms(30), top: vs(30), color: 'black'}}>
             {data && data.first_name && data.last_name
               ? data.first_name + ' ' + data.last_name
               : 'Username not available'}
           </Text>
           <View
             style={{
-              top: 30,
+              top: vs(25),
               flexDirection: 'column',
               justifyContent: 'flex-start',
               alignItems: 'flex-start',
@@ -456,21 +457,21 @@ const Home = ({navigation}) => {
             </View> */}
             <View
               style={{
-                top: 10,
+                top: vs(5),
                 flexDirection: 'row',
                 justifyContent: 'center',
                 alignItems: 'center',
               }}>
               <Text
                 style={{
-                  fontSize: 20,
-                  letterSpacing: 0.8,
+                  fontSize: ms(17),
+                  letterSpacing: ms(0.8),
                   color: '#31367b',
                   fontWeight: 'bold',
                 }}>
                 Ticket no.:
               </Text>
-              <Text style={{fontSize: 17, color: '#7f7f7f'}}>
+              <Text style={{fontSize: ms(17), color: '#7f7f7f'}}>
                 {' '}
                 {data ? data.ticket_no : ''}
               </Text>
@@ -478,11 +479,11 @@ const Home = ({navigation}) => {
           </View>
           <View
             style={{
-              height: 30,
+              height: vs(30),
               // backgroundColor: 'red',
               width: '100%',
-              height: 200,
-              top: 60,
+              height: vs(170),
+              top: vs(50),
               alignItems: 'center',
             }}>
             {/* <ScrollView style={styles.container}>
@@ -505,11 +506,11 @@ const Home = ({navigation}) => {
               style={{
                 flex: 1,
                 width: '90%',
-                padding: 10,
+                padding: s(8),
                 backgroundColor: '#3758ff',
                 // justifyContent: 'center',
                 // alignItems: 'center',
-                borderRadius: 15,
+                borderRadius: ms(14),
                 // height: 300,
               }}>
               <View
@@ -523,10 +524,10 @@ const Home = ({navigation}) => {
                   style={{
                     color: '#fff',
                     fontWeight: 'bold',
-                    fontSize: 20,
+                    fontSize: ms(19),
                     alignSelf: 'center',
                     textDecorationLine: 'underline',
-                    left: 15,
+                    left: s(15),
                   }}>
                   ACTIVITY LOG
                 </Text>
@@ -535,14 +536,14 @@ const Home = ({navigation}) => {
                     // postition: 'absolute',
                     zIndex: 1,
                     // backgroundColor: 'red',
-                    left: 80,
+                    left: s(75),
                   }}
                   onPress={() => setIsCalenderVisible(!isCalenderVisible)}>
                   <Image
                     style={{
                       resizeMode: 'contain',
-                      height: 30,
-                      width: 30,
+                      height: vs(25),
+                      width: s(30),
                       // left: 10,
                     }}
                     source={calendar}
@@ -571,7 +572,7 @@ const Home = ({navigation}) => {
                   style={{
                     color: '#fff',
                     fontWeight: 'bold',
-                    fontSize: 12,
+                    fontSize: ms(10),
                     alignSelf: 'flex-start',
                   }}>
                   {selectedDate === getCurrentDate() ? 'TODAY' : selectedDate}
@@ -582,21 +583,21 @@ const Home = ({navigation}) => {
                 <>
                   <View
                     style={{
-                      marginTop: 10,
+                      marginTop: vs(10),
                       flexDirection: 'row',
                       justifyContent: 'space-between',
                       borderWidth: 1,
                       borderColor: '#fff',
-                      padding: 2,
-                      height: 30,
+                      padding: s(2),
+                      height: vs(24),
                       alignItems: 'center',
                     }}>
-                    <Text style={{fontSize: 14, fontWeight: 'bold'}}>
+                    <Text style={{fontSize: ms(13), fontWeight: 'bold'}}>
                       Total tyres scanned:
                     </Text>
                     <Text
                       style={{
-                        fontSize: 16,
+                        fontSize: ms(16),
                         fontWeight: 'bold',
                         color: '#fff',
                       }}>
@@ -604,27 +605,31 @@ const Home = ({navigation}) => {
                     </Text>
                     <Text
                       style={{
-                        fontSize: 14,
+                        fontSize: ms(13),
                         fontWeight: 'bold',
                         borderLeftWidth: 1,
                         borderLeftColor: '#fff',
-                        paddingLeft: 5,
+                        paddingLeft: s(5),
                       }}>
                       Total vehicles scanned:
                     </Text>
                     <Text
-                      style={{fontSize: 16, fontWeight: 'bold', color: '#fff'}}>
+                      style={{
+                        fontSize: ms(16),
+                        fontWeight: 'bold',
+                        color: '#fff',
+                      }}>
                       {uniqueVinCount}
                     </Text>
                   </View>
                   <View
                     style={{
                       // backgroundColor: 'red',
-                      marginTop: 10,
-                      padding: 4,
+                      marginTop: vs(10),
+                      padding: s(2),
                       borderWidth: 0.5,
                       borderColor: '#fff',
-                      height: 85,
+                      height: vs(70),
                     }}>
                     <View
                       style={{
@@ -633,8 +638,8 @@ const Home = ({navigation}) => {
                         alignItems: 'center',
                         borderBottomWidth: 1,
                         borderBottomColor: '#c8e1ff',
-                        paddingBottom: 8,
-                        marginBottom: 8,
+                        paddingBottom: vs(5),
+                        marginBottom: vs(5),
                         // marginTop: 10,
                         // backgroundColor: '#0f103e',
                       }}>
@@ -674,7 +679,7 @@ const Home = ({navigation}) => {
                             flexDirection: 'row',
                             borderBottomWidth: 1,
                             borderBottomColor: '#c8e1ff',
-                            paddingVertical: 8,
+                            paddingVertical: vs(8),
                           }}>
                           {/* <Text style={{flex: 1, textAlign: 'left'}}>
                             {index + 1}
@@ -684,7 +689,7 @@ const Home = ({navigation}) => {
                               flex: 6,
                               textAlign: 'center',
                               // marginLeft: 7,
-                              fontSize: 13,
+                              fontSize: ms(13),
                               color: '#fff',
                             }}>
                             {item.tin}
@@ -693,7 +698,7 @@ const Home = ({navigation}) => {
                             style={{
                               flex: 6,
                               textAlign: 'center',
-                              fontSize: 13,
+                              fontSize: ms(13),
                               color: '#fff',
                             }}>
                             {item.vin}
@@ -710,7 +715,7 @@ const Home = ({navigation}) => {
                     justifyContent: 'center',
                     alignItems: 'center',
                   }}>
-                  <Text style={{fontWeight: 'bold', fontSize: 20}}>
+                  <Text style={{fontWeight: 'bold', fontSize: ms(20)}}>
                     No recorded activity
                   </Text>
                 </View>
@@ -735,21 +740,21 @@ const Home = ({navigation}) => {
           <View
             style={{
               backgroundColor: 'white',
-              padding: 20,
-              borderRadius: 10,
+              padding: s(20),
+              borderRadius: ms(10),
               elevation: 5,
               justifyContent: 'center',
               alignItems: 'center',
               width: '80%',
 
-              minHeight: 260,
+              minHeight: vs(260),
               height: '35%',
             }}>
             <Text
               style={{
-                fontSize: 18,
+                fontSize: ms(18),
                 fontWeight: 'bold',
-                marginBottom: 10,
+                marginBottom: vs(10),
                 color: 'black',
               }}>
               Enter details
@@ -757,14 +762,14 @@ const Home = ({navigation}) => {
 
             <View
               style={{
-                margin: 20,
-                marginBottom: 5,
+                margin: s(20),
+                marginBottom: vs(5),
                 flexDirection: 'row',
                 justifyContent: 'space-evenly',
-                width: 220,
-                height: 40,
+                width: s(195),
+                height: vs(35),
                 // top: 160,
-                borderRadius: 12,
+                borderRadius: ms(12),
                 borderWidth: 1.5,
                 // borderColor: '#3758ff',
                 borderColor: '#0f113e',
@@ -783,7 +788,7 @@ const Home = ({navigation}) => {
                 <TextInput
                   placeholder="First name"
                   placeholderTextColor="grey"
-                  style={{height: 40, width: 180, color: 'black'}}
+                  style={{height: vs(35), width: s(170), color: 'black'}}
                   value={firstname}
                   onChangeText={text => setFirstname(text)}
                 />
@@ -791,14 +796,14 @@ const Home = ({navigation}) => {
             </View>
             <View
               style={{
-                margin: 10,
-                marginBottom: 5,
+                margin: s(10),
+                marginBottom: vs(5),
                 flexDirection: 'row',
                 justifyContent: 'space-evenly',
-                width: 220,
-                height: 40,
+                width: s(195),
+                height: vs(35),
                 // top: 160,
-                borderRadius: 12,
+                borderRadius: ms(12),
                 borderWidth: 1.5,
                 // borderColor: '#3758ff',
                 borderColor: '#0f113e',
@@ -817,7 +822,7 @@ const Home = ({navigation}) => {
                 <TextInput
                   placeholder="Last name"
                   placeholderTextColor="grey"
-                  style={{height: 40, width: 180, color: 'black'}}
+                  style={{height: vs(35), width: s(170), color: 'black'}}
                   value={lastname}
                   onChangeText={text => setLastname(text)}
                 />
@@ -826,10 +831,10 @@ const Home = ({navigation}) => {
 
             <TouchableOpacity
               style={{
-                width: 190,
-                height: 40,
-                marginTop: 25,
-                borderRadius: 12,
+                width: s(160),
+                height: vs(35),
+                marginTop: vs(10),
+                borderRadius: ms(12),
                 // borderWidth: 3,
                 // borderColor: "#3758ff",
                 justifyContent: 'center',
@@ -843,8 +848,8 @@ const Home = ({navigation}) => {
                 style={{
                   color: '#fff',
                   fontWeight: 'bold',
-                  fontSize: 17,
-                  letterSpacing: 1,
+                  fontSize: ms(17),
+                  letterSpacing: ms(1),
                 }}>
                 Submit
               </Text>
@@ -865,11 +870,11 @@ const Home = ({navigation}) => {
           }}>
           <View
             style={{
-              margin: 20,
+              margin: s(10),
               backgroundColor: 'white',
-              borderRadius: 20,
+              borderRadius: ms(20),
               width: '90%',
-              padding: 35,
+              padding: s(30),
               alignItems: 'center',
               shadowColor: '#000',
               shadowOffset: {
@@ -935,95 +940,95 @@ const styles = StyleSheet.create({
   },
   text1: {
     // position: "absolute",
-    top: 25,
+    top: vs(25),
     color: '#d9d9d9',
-    fontSize: 20,
+    fontSize: ms(20),
     fontWeight: 'bold',
-    letterSpacing: 3,
-    // flex:1,
+    letterSpacing: ms(3),
+    // flex: 1,
   },
   text2: {
     // position: "absolute",
-    top: 60,
-    // left: 22,
+    top: vs(60),
+    // left: s(22),
     color: '#fff',
-    fontSize: 20,
+    fontSize: ms(20),
     // fontWeight: "bold",
     fontFamily: 'Allura_400Regular',
     fontStyle: 'italic',
-    // flex:1,
+    // flex: 1,
   },
   text: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 17,
-    letterSpacing: 1,
-    // flex:1,
+    fontSize: ms(17),
+    letterSpacing: ms(1),
+    // flex: 1,
   },
   btn: {
     position: 'absolute',
-    // top: 360,
-    // left: 135,
+    // top: vs(360),
+    // left: s(135),
     shadowColor: 'rgba(0,0,0, .4)',
-    shadowOffset: {height: 1, width: 1},
+    shadowOffset: {height: vs(1), width: s(1)},
     shadowOpacity: 1,
-    shadowRadius: 1,
+    shadowRadius: ms(1),
     elevation: 3,
-    borderRadius: 30,
-    // borderWidth: 3,
+    borderRadius: ms(30),
+    // borderWidth: ms(3),
     borderColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
     // backgroundColor: "rgba(0, 0, 0, 0.1)",
-    height: 50,
-    width: 120,
-    // margin: 100,
-    // flex:1
+    height: vs(50),
+    width: s(120),
+    // margin: vs(100),
+    // flex: 1
   },
   image: {
     position: 'absolute',
-    paddingRight: 5,
-    top: 0,
+    paddingRight: s(5),
+    top: vs(0),
     left: '75%',
-    height: 200,
+    height: vs(200),
     // height: "30%",
-    width: 80,
+    width: s(80),
     // width: "20%",
   },
   input1: {
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    marginTop: 300,
+    marginTop: vs(300),
     width: '90%',
-    height: 30,
-    borderRadius: 20,
+    height: vs(30),
+    borderRadius: ms(20),
   },
   input2: {
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    marginTop: 20,
+    marginTop: vs(20),
     width: '90%',
-    height: 30,
-    borderRadius: 20,
+    height: vs(30),
+    borderRadius: ms(20),
   },
   loginView: {
     backgroundColor: '#3758ff',
     // backgroundColor: "rgba(255,140,97,1)",
-    marginTop: 20,
+    marginTop: vs(20),
     width: '90%',
-    height: 30,
+    height: vs(30),
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 20,
+    borderRadius: ms(20),
   },
   loginBtn: {
     width: '100%',
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 20,
+    borderRadius: ms(20),
   },
   ptext: {
     margin: 0,
-    paddingLeft: 15,
+    paddingLeft: s(15),
   },
   logInText: {
     color: '#fff',

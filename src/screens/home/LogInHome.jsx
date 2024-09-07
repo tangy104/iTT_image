@@ -1,7 +1,6 @@
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
@@ -13,6 +12,7 @@ import {
 } from 'react-native';
 import React, {useState, useEffect} from 'react';
 import {useFocusEffect} from '@react-navigation/native';
+import axios from 'axios';
 import Dialog from 'react-native-dialog';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useSelector, useDispatch} from 'react-redux';
@@ -32,25 +32,53 @@ import question from '../../utils/images/question.png';
 import iTTText from '../../utils/images/iTTText.png';
 import welcomeText from '../../utils/images/welcomeText.png';
 
+import {s, vs, ms, mvs, ScaledSheet} from 'react-native-size-matters';
+
 const StackHome = ({navigation}) => {
   const [ipAddress, setIpAddress] = useState('');
   const [isDialogVisible, setIsDialogVisible] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const dispatch = useDispatch();
   const creden = useSelector(state => state.creden.creden);
   console.log('creden', creden);
 
-  const checkLogin = async () => {
-    const data = await AsyncStorage.getItem('isLoggedIn');
-    console.log('at main home', data);
-    // setIsLoggedIn(data === 'true');
-    setIsLoggedIn(data);
+  const checkip = async () => {
+    const ip = await AsyncStorage.getItem('ip');
+    console.log('ip inside', ip);
+
+    if (ip != null || ip != undefined) {
+      console.log('ip', ip);
+      try {
+        const response = await axios.get(`http://${ip}:1337`, {
+          timeout: 1000, // 1 second timeout
+        });
+        console.log('response', response.data.message);
+        if (response.data.message === 'Connection successful!') {
+          dispatch(
+            setCreden({
+              ticket: null,
+              zone: null,
+              URI: `http://${ip}:1337`,
+              WS_URI: `ws://${ip}:1337`,
+              RTMP_URI: `rtmp://${ip}:1935/tv`,
+            }),
+          );
+          console.log('done setting ip');
+        }
+      } catch (error) {
+        console.log('error', error);
+        setIsDialogVisible(true);
+      }
+    } else {
+      setIsDialogVisible(true);
+      console.log('ip is null');
+    }
   };
 
   useEffect(() => {
-    checkLogin();
+    checkip();
+    console.log('check initiated');
   }, []);
 
   const handleBackPress = () => {
@@ -97,25 +125,32 @@ const StackHome = ({navigation}) => {
     };
   }, []);
 
-  useEffect(() => {
-    setIsDialogVisible(true);
-  }, []);
-
-  const handleCancel = () => {
-    setIsDialogVisible(false);
-  };
-
-  const handleOK = () => {
+  const handleOK = async () => {
     if (ipAddress) {
-      setIsDialogVisible(false);
-      dispatch(
-        setCreden({
-          ticket: null,
-          URI: `http://${ipAddress}:1337`,
-          WS_URI: `ws://${ipAddress}:1337`,
-          RTMP_URI: `rtmp://${ipAddress}:1935/tv`,
-        }),
-      );
+      try {
+        const response = await axios.get(`http://${ipAddress}:1337`, {
+          timeout: 1000, // 1 second timeout
+        });
+        console.log('response', response.data.message);
+        if (response.data.message === 'Connection successful!') {
+          setIsDialogVisible(false);
+          AsyncStorage.setItem('ip', ipAddress);
+          dispatch(
+            setCreden({
+              ticket: null,
+              zone: null,
+              URI: `http://${ipAddress}:1337`,
+              WS_URI: `ws://${ipAddress}:1337`,
+              RTMP_URI: `rtmp://${ipAddress}:1935/tv`,
+            }),
+          );
+        }
+      } catch (error) {
+        Alert.alert(
+          'Invalid IP address.',
+          'Check server or network connection and try again.',
+        );
+      }
     } else {
       Alert.alert('Error', 'IP address cannot be empty.');
     }
@@ -136,52 +171,43 @@ const StackHome = ({navigation}) => {
         <ImageBackground
           source={backgroundImage2}
           style={styles.imageBackground}>
-          <Image
-            source={logoTATA}
-            style={{resizeMode: 'contain', width: 95, height: 65, top: 30}}
-          />
+          <Image source={logoTATA} style={styles.logoTATA} />
           <Text style={styles.text1}>TATA MOTORS LTD.</Text>
-          <Image
-            source={logoApp}
-            style={{resizeMode: 'contain', width: 140, height: 120, top: 75}}
-          />
-          {/* <Text style={styles.text2}>intelligent Tyre Tracer</Text> */}
-          <Image
-            source={iTTText}
-            style={{resizeMode: 'contain', width: 250, top: 40}}
-          />
-          {/* <Text style={{fontSize: 29, top: 120, color: 'black'}}>
-            Welcome to
-            <Text style={{fontStyle: 'italic'}}>&nbsp;i&nbsp;</Text>
-            TT
-          </Text> */}
-          <Image
-            source={welcomeText}
-            style={{resizeMode: 'contain', width: 250, top: 75}}
-          />
-          <Text
-            style={{
-              fontSize: 17,
-              color: '#7f7f7f',
-              textAlign: 'center',
-              top: 60,
-            }}>
+          <Image source={logoApp} style={styles.logoApp} />
+          <Image source={iTTText} style={styles.iTTText} />
+          <Image source={welcomeText} style={styles.welcomeText} />
+          <Text style={styles.subText}>
             AI-based Tyre Specification Reading and Downstream Analytics
           </Text>
-          <TouchableOpacity
-            style={styles.getStartedButton}
-            onPress={() => {
-              // isLoggedIn
-              navigation.navigate('Login');
-              // : navigation.navigate('Login');
+          <View
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'space-evenly',
+              alignItems: 'center',
+              width: '90%',
+              // backgroundColor: 'red',
+              marginTop: vs(25),
             }}>
-            <Text style={styles.text}>Get started</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.changeIpButton}
+              onPress={() => {
+                setIsDialogVisible(true);
+              }}>
+              <Text style={styles.changeIpButtonText}>Change IP</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.getStartedButton}
+              onPress={() => {
+                navigation.navigate('Login');
+              }}>
+              <Text style={styles.text}>Get started</Text>
+            </TouchableOpacity>
+          </View>
           <View style={styles.developedByView}>
             <Text style={styles.developedByText}>Developed by:</Text>
           </View>
           <View style={styles.developedByInfoView}>
-            {/* <Image source={logoKGP2} style={styles.logoKGP2} /> */}
             <View style={styles.developedByTextView}>
               <Text style={styles.developedByTextLines}>
                 Centre of Excellence in
@@ -196,7 +222,6 @@ const StackHome = ({navigation}) => {
       </View>
       {!keyboardVisible && (
         <Tabs
-          // style={{position: "absolute", bottom: 0}}
           left={doc}
           center={logoKGP2}
           right={question}
@@ -212,7 +237,6 @@ const StackHome = ({navigation}) => {
           value={ipAddress}
           keyboardType="decimal-pad"
         />
-        {/* <Dialog.Button label="Cancel" onPress={handleCancel} /> */}
         <Dialog.Button label="OK" onPress={handleOK} />
       </Dialog.Container>
     </SafeAreaView>
@@ -221,9 +245,29 @@ const StackHome = ({navigation}) => {
 
 export default StackHome;
 
-const styles = StyleSheet.create({
+const styles = ScaledSheet.create({
   safeContainer: {
     flex: 1,
+  },
+  changeIpButton: {
+    // position: 'absolute',
+    display: 'flex',
+    // flex:1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: '10@s',
+    zIndex: 1,
+    color: 'white',
+    height: '32@vs',
+    width: '140@s',
+    // right: '25@s',
+    // top: '30@vs',
+    backgroundColor: '#181a63',
+  },
+  changeIpButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: '16@ms',
   },
   linearGradient: {
     flex: 1,
@@ -236,78 +280,88 @@ const styles = StyleSheet.create({
     height: '60%',
     alignItems: 'center',
   },
-
-  text1: {
-    top: 30,
-    color: '#d9d9d9',
-    fontSize: 20,
-    fontWeight: 'bold',
-    letterSpacing: 3,
+  logoTATA: {
+    resizeMode: 'contain',
+    width: '250@s',
+    height: '55@vs',
+    marginTop: '35@vs',
   },
-  text2: {
-    top: 60,
+  text1: {
     color: '#fff',
-    fontSize: 20,
-    fontFamily: 'Allura_400Regular',
-    fontStyle: 'italic',
+    fontSize: '20@s',
+    fontWeight: 'bold',
+    marginTop: '10@vs',
+    letterSpacing: '1.5@s',
+  },
+  logoApp: {
+    resizeMode: 'contain',
+    width: '90@s',
+    height: '90@vs',
+    // marginTop: '10@vs',
+  },
+  iTTText: {
+    resizeMode: 'contain',
+    width: '250@s',
+    height: '55@vs',
+    // marginTop: '15@vs',
+  },
+  welcomeText: {
+    resizeMode: 'contain',
+    width: '250@s',
+    height: '55@vs',
+    marginTop: '5@vs',
+  },
+  subText: {
+    color: '#aaaaaa',
+    fontSize: '14@s',
+    // fontWeight: 'bold',
+    // marginTop: '5@vs',
+    textAlign: 'center',
+  },
+  getStartedButton: {
+    // flex:1,
+    // marginTop: '45@vs',
+    borderRadius: '9@s',
+    backgroundColor: '#006401',
+    height: '32@vs',
+    width: '140@s',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   text: {
     color: '#fff',
+    fontSize: '18@s',
     fontWeight: 'bold',
-    fontSize: 17,
-    letterSpacing: 1,
-  },
-  getStartedButton: {
-    width: 180,
-    height: 40,
-    top: 90,
-    justifyContent: 'center',
-    alignItems: 'center',
-    // backgroundColor: '#31367b',
-    // backgroundColor: '#234f1e',
-    backgroundColor: 'darkgreen',
-    borderRadius: 10,
   },
   developedByView: {
-    top: 135,
-    // alignSelf: 'flex-start',
-    height: 35,
-    width: 150,
-    borderRadius: 5,
-    alignItems: 'center',
+    // flex: 1,
     justifyContent: 'center',
-    padding: 4,
+    alignItems: 'center',
+    // backgroundColor: 'pink',
+    letterSpacing: '1@s',
+    marginTop: '14@vs',
   },
   developedByText: {
-    color: 'black',
+    color: '#000',
+    fontSize: '14@s',
     fontWeight: 'bold',
-    fontSize: 17,
-    letterSpacing: 0.8,
     textDecorationLine: 'underline',
   },
   developedByInfoView: {
-    top: 130,
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
+    // flex: 2,
     justifyContent: 'center',
-    // alignSelf: 'flex-start',
+    alignItems: 'center',
+    // paddingBottom: '20@vs',
     // backgroundColor: 'red',
-    paddingLeft: 10,
-  },
-  logoKGP2: {
-    right: 20,
-    resizeMode: 'contain',
-    width: 60,
-    height: 60,
+    marginTop: '10@vs',
   },
   developedByTextView: {
-    padding: 10,
-    justifyContent: 'center',
     alignItems: 'center',
   },
   developedByTextLines: {
-    fontSize: 16.5,
-    color: 'black',
+    color: '#000',
+    fontSize: '12@s',
+    textAlign: 'center',
+    // fontWeight: 'bold',
   },
 });

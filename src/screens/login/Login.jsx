@@ -1,4 +1,5 @@
 import React, {useState, useEffect} from 'react';
+import {useFocusEffect} from '@react-navigation/native';
 import {
   View,
   Text,
@@ -13,7 +14,10 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
+  BackHandler,
 } from 'react-native';
+import {Dropdown, SelectCountry} from 'react-native-element-dropdown';
+import {s, vs, ms, ScaledSheet} from 'react-native-size-matters';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useDispatch, useSelector} from 'react-redux';
 import axios from 'axios';
@@ -23,7 +27,7 @@ import {URI} from '@env';
 
 import Tabs from '../../navigation/Tabs';
 
-// Import your images
+// Import images
 import backgroundImage from '../../utils/images/backgroundImage.png';
 import backgroundImage2 from '../../utils/images/backgroundImage2.png';
 import logoTATA from '../../utils/images/logoTATA.png';
@@ -37,6 +41,13 @@ import admin from '../../utils/images/admin.png';
 import iTTText from '../../utils/images/iTTText.png';
 
 const Login = ({navigation, route}) => {
+  const [selectedZone, setSelectedZone] = useState(null);
+  const data = [
+    {label: 'Rear', value: 'Rear'},
+    {label: 'Front', value: 'Front'},
+    // Add more options as needed
+  ];
+
   const [ticketNo, setTicketNo] = useState('');
   // const [adminTicketNo, setAdminTicketNo] = useState("");
   const [showAdminModal, setShowAdminModal] = useState(false);
@@ -49,6 +60,21 @@ const Login = ({navigation, route}) => {
   console.log('uri', URI);
   // console.log('uri_new-', creden.URI);
   // console.log('ws_uri-', creden.WS_URI);
+
+  const handleBackPress = () => {
+    // e.preventDefault();
+    navigation.replace('LogInHome');
+    return true;
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+      return () => {
+        BackHandler.removeEventListener('hardwareBackPress', handleBackPress);
+      };
+    }),
+  );
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
@@ -100,9 +126,14 @@ const Login = ({navigation, route}) => {
   };
 
   const handlePostData = async () => {
+    console.log('zone:', selectedZone);
     try {
       if (!ticketNo) {
         alert('Please enter Ticket no.');
+        return;
+      }
+      if (selectedZone === null) {
+        alert('Please select a zone');
         return;
       }
 
@@ -120,6 +151,7 @@ const Login = ({navigation, route}) => {
       dispatch(
         setCreden({
           ticket: ticketNo,
+          zone: selectedZone,
           URI: creden.URI,
           WS_URI: creden.WS_URI,
           RTMP_URI: creden.RTMP_URI,
@@ -128,7 +160,7 @@ const Login = ({navigation, route}) => {
       AsyncStorage.setItem('token', token);
       AsyncStorage.setItem('isLoggedIn', JSON.stringify(true));
       AsyncStorage.setItem('ticket', ticketNo);
-      // AsyncStorage.setItem('ticket', ticketNo);
+      AsyncStorage.setItem('zone', selectedZone);
 
       //   console.log('Login successful! token:', token); //look into this as they give different values
       console.log('Login successful! token:', globalToken);
@@ -141,8 +173,20 @@ const Login = ({navigation, route}) => {
       // console.error("Error during login:", error.response.status);
       if (error.response && error.response.status === 401) {
         alert('Invalid Ticket no. Please try again.');
+      } else if (
+        error.response &&
+        error.response.status === 400 &&
+        error.response.data.detail === 'Ticket no. already logged in.'
+      ) {
+        alert('Ticket no already logged in. Please enter correct ticket no.');
+      } else if (
+        error.response &&
+        error.response.status === 400 &&
+        error.response.data.detail === 'Unregistered ticket no..'
+      ) {
+        alert('Unauthorized ticket no. Please contact admin for access.');
       } else {
-        alert('Invalid credentials. Please try again.');
+        alert('Error during login. Please try again.');
       }
     }
   };
@@ -167,11 +211,14 @@ const Login = ({navigation, route}) => {
             source={backgroundImage2}
             style={[
               styles.backgroundImage,
-              {height: keyboardVisible ? '90%' : '77%'},
-              {top: keyboardVisible ? -10 : 0},
+              {height: keyboardVisible ? '92%' : '77%'},
+              {top: keyboardVisible ? vs(-10) : vs(0)},
             ]}>
             <View
-              style={[styles.logoContainer, {top: keyboardVisible ? 20 : 0}]}>
+              style={[
+                styles.logoContainer,
+                {top: keyboardVisible ? vs(20) : vs(0)},
+              ]}>
               <View style={{flexDirection: 'row'}}>
                 <Image source={logoTATA} style={styles.logoTATA} />
                 <TouchableOpacity
@@ -185,8 +232,8 @@ const Login = ({navigation, route}) => {
                     source={admin}
                     style={{
                       resizeMode: 'contain',
-                      width: 80,
-                      height: 50,
+                      width: s(80),
+                      height: vs(40),
                     }}
                   />
                 </TouchableOpacity>
@@ -201,13 +248,13 @@ const Login = ({navigation, route}) => {
               </Text> */}
               <Image
                 source={iTTText}
-                style={{resizeMode: 'contain', width: 250, top: 30}}
+                style={{resizeMode: 'contain', width: s(240), top: vs(30)}}
               />
             </View>
             <View style={styles.inputContainer}>
               <Image
                 source={id}
-                style={{resizeMode: 'contain', height: 30, width: 30}}
+                style={{resizeMode: 'contain', height: vs(25), width: s(24)}}
               />
               <TextInput
                 placeholder="Ticket no."
@@ -215,6 +262,81 @@ const Login = ({navigation, route}) => {
                 style={styles.input}
                 value={ticketNo}
                 onChangeText={text => setTicketNo(text)}
+              />
+            </View>
+            <View
+              style={{
+                // flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+                // padding: 16,
+                // backgroundColor: 'red',
+                width: s(220),
+                top: vs(40),
+              }}>
+              <Dropdown
+                style={{
+                  height: vs(36),
+                  width: s(198),
+                  borderColor: '#0f113e',
+                  borderWidth: 1.5,
+                  borderRadius: ms(10),
+                  paddingHorizontal: s(10),
+                  backgroundColor: !selectedZone
+                    ? 'white'
+                    : selectedZone === 'Rear'
+                    ? '#9caf88'
+                    : '#0c4767',
+                }}
+                containerStyle={{
+                  color: 'black',
+                  borderRadius: ms(12),
+                  marginTop: vs(5),
+                  // backgroundColor: 'red',
+                  paddingVertical: vs(3),
+                }}
+                itemContainerStyle={{
+                  borderBottom: 'black',
+                  borderRadius: ms(12),
+                }}
+                itemTextStyle={{color: 'black'}}
+                placeholderStyle={{color: 'gray'}}
+                selectedTextStyle={{color: 'white'}}
+                // activeColor="green"
+                data={data}
+                labelField="label"
+                valueField="value"
+                placeholder="Select zone"
+                value={selectedZone}
+                onChange={item => setSelectedZone(item.value)}
+                renderItem={({label, value}) => (
+                  <View
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      // alignItems: 'center',
+                      // paddingTop: label === 'Rear' ? 10 : 5,
+                      // paddingBottom: label === 'Rear' ? 5 : 15,
+                      paddingVertical: vs(10),
+                      height: vs(40),
+                      paddingHorizontal: s(10),
+                      borderRadius: ms(12),
+                      backgroundColor: label === 'Rear' ? '#9caf88' : '#0c4767',
+                      marginVertical: vs(3),
+                      marginHorizontal: s(5),
+                    }}>
+                    <Text style={{fontSize: ms(16), color: 'white'}}>
+                      {label}
+                    </Text>
+                    {/* <View
+                      style={{
+                        height: 0.5,
+                        backgroundColor: '#0f113e',
+                        // marginTop: 10,
+                      }}
+                    /> */}
+                  </View>
+                )}
               />
             </View>
             <TouchableOpacity
@@ -245,49 +367,16 @@ const Login = ({navigation, route}) => {
             <Text style={styles.modalTitle}>Admin Login</Text>
             <Text style={{color: 'black'}}>Please enter the Admin Passkey</Text>
 
-            {/* <View
-              style={{
-                margin: 20,
-                marginBottom: 5,
-                flexDirection: "row",
-                justifyContent: "space-evenly",
-                width: 220,
-                height: 40,
-                // top: 160,
-                borderRadius: 12,
-                borderWidth: 1.5,
-                borderColor: "#3758ff",
-                //   justifyContent: "center",
-                alignItems: "center",
-                //   zIndex: 2,
-                //   backgroundColor: "red",
-              }}
-              // onPress={() => navigation.navigate("Vmodel")}
-            >
-              <Image
-                source={id}
-                style={{ resizeMode: "contain", height: 30, width: 30 }}
-              ></Image>
-              <View>
-                <TextInput
-                  placeholder="Ticket no."
-                  placeholderTextColor=""
-                  style={{ height: 40, width: 180 }}
-                  value={adminTicketNo}
-                  onChangeText={(text) => setAdminTicketNo(text)}
-                />
-              </View>
-            </View> */}
             <View
               style={{
-                margin: 20,
-                marginTop: 15,
+                margin: s(20),
+                marginTop: vs(15),
                 flexDirection: 'row',
                 justifyContent: 'space-evenly',
-                width: 220,
-                height: 40,
+                width: s(190),
+                height: vs(35),
                 // top: 160,
-                borderRadius: 12,
+                borderRadius: ms(12),
                 borderWidth: 1.5,
                 borderColor: '#3758ff',
                 //   justifyContent: "center",
@@ -297,12 +386,16 @@ const Login = ({navigation, route}) => {
               }}>
               <Image
                 source={id}
-                style={{resizeMode: 'contain', height: 30, width: 30}}></Image>
+                style={{
+                  resizeMode: 'contain',
+                  height: vs(25),
+                  width: s(25),
+                }}></Image>
               <View>
                 <TextInput
                   placeholder="Passkey"
                   placeholderTextColor="grey"
-                  style={{height: 40, width: 180, color: 'black'}}
+                  style={{height: vs(40), width: s(150), color: 'black'}}
                   secureTextEntry
                   value={password}
                   onChangeText={text => setPassword(text)}
@@ -311,10 +404,10 @@ const Login = ({navigation, route}) => {
             </View>
             <TouchableOpacity
               style={{
-                width: 190,
-                height: 40,
+                width: s(170),
+                height: vs(35),
                 // top: 160,
-                borderRadius: 12,
+                borderRadius: ms(12),
                 // borderWidth: 3,
                 // borderColor: "#3758ff",
                 justifyContent: 'center',
@@ -334,7 +427,7 @@ const Login = ({navigation, route}) => {
 
 export default Login;
 
-const styles = StyleSheet.create({
+const styles = ScaledSheet.create({
   container: {
     flex: 1,
   },
@@ -355,85 +448,76 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: '40@vs',
     // backgroundColor: 'red',
-    marginTop: 30,
+    marginTop: '25@vs',
   },
   // style={{resizeMode: 'contain', width: 140, height: 120, top: 75}}
   logoTATA: {
     resizeMode: 'contain',
-    width: 95,
-    height: 65,
+    width: '95@s',
+    height: '55@vs',
     alignSelf: 'center',
     // justifyContent: "center",
     // left:"75%"
   },
   logoText: {
     color: '#d9d9d9',
-    fontSize: 20,
+    fontSize: '20@ms',
     fontWeight: 'bold',
-    letterSpacing: 3,
-    marginBottom: 10,
+    letterSpacing: '3@ms',
+    marginBottom: '10@vs',
   },
   logoApp: {
     resizeMode: 'contain',
-    width: 140,
-    height: 120,
-    top: 60,
+    width: '100@s',
+    height: '100@vs',
+    top: '50@vs',
   },
   subtitleText: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: '20@ms',
     fontFamily: 'Allura_400Regular',
     fontStyle: 'italic',
-    marginBottom: 10,
-  },
-  welcomeText: {
-    fontSize: 30,
-    color: '#fff',
-    marginBottom: 10,
-  },
-  infoText: {
-    fontSize: 17,
-    color: '#7f7f7f',
-    textAlign: 'center',
-    marginBottom: 20,
-    top: 65,
+    marginBottom: '10@vs',
   },
   inputContainer: {
-    width: 220,
+    width: '196@s',
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: '20@vs',
     borderWidth: 1.5,
-    // borderColor: '#3758ff',
+    borderColor: '#3758ff',
     borderColor: '#0f113e',
-    borderRadius: 12,
-    paddingHorizontal: 10,
+    borderRadius: '12@ms',
+    paddingHorizontal: '10@s',
     backgroundColor: 'white',
-    top: 90,
+    top: '50@vs',
+    // backgroundColor:"red"
   },
   input: {
     flex: 1,
-    height: 40,
-    paddingHorizontal: 10,
+    height: '40@vs',
+    // top: '10@vs',
+    paddingHorizontal: '6@s',
     color: 'black',
+    backgroundColor: 'red',
   },
   loginButton: {
-    width: 220,
-    height: 40,
-    borderRadius: 12,
+    width: '196@s',
+    height: '35@vs',
+    borderRadius: '12@ms',
     // backgroundColor: '#3758ff',
     backgroundColor: 'darkgreen',
     justifyContent: 'center',
     alignItems: 'center',
-    top: 90,
+    top: '50@vs',
   },
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 17,
-    letterSpacing: 1,
+    fontSize: '17@ms',
+    letterSpacing: '1@ms',
   },
 
   modalContainer: {
@@ -444,36 +528,36 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
+    padding: '20@s',
+    borderRadius: '10@ms',
     elevation: 5,
     justifyContent: 'center',
     alignItems: 'center',
     width: '80%',
 
-    minHeight: 260,
+    minHeight: '260@vs',
     height: '35%',
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: '18@ms',
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: '10@vs',
     color: 'black',
   },
   modalInput: {
     borderWidth: 1,
     borderColor: 'gray',
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 10,
+    borderRadius: '5@ms',
+    padding: '10@s',
+    marginBottom: '10@vs',
     width: '95%',
   },
 
   text: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 17,
-    letterSpacing: 1,
+    fontSize: '17@ms',
+    letterSpacing: '1@ms',
     // flex:1,
   },
 });

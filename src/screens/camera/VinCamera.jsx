@@ -14,8 +14,7 @@ import {
   Keyboard,
 } from 'react-native';
 import {Switch} from 'react-native-switch';
-// import {IconButton, MD3Colors} from 'react-native-paper';
-// import {BarCodeScanner} from 'expo-barcode-scanner';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {CameraView, useCameraPermissions, Camera} from 'expo-camera';
 import {
   GestureHandlerRootView,
@@ -40,7 +39,8 @@ import logoKGP2 from '../../utils/images/logoKGP2.png';
 import logout from '../../utils/images/logout.png';
 import barcode from '../../utils/images/barcode.png';
 import logoKGP3 from '../../utils/images/logoKGP3.png';
-// import { TouchableOpacity } from "react-native-web";
+
+import {ScaledSheet, s, vs, ms} from 'react-native-size-matters';
 
 const BarcodeScannerScreen = ({navigation}) => {
   const dummy = {
@@ -412,6 +412,7 @@ const BarcodeScannerScreen = ({navigation}) => {
             dispatch(
               setCreden({
                 ticket: null,
+                zone: null,
                 URI: creden.URI,
                 WS_URI: creden.WS_URI,
                 RTMP_URI: creden.RTMP_URI,
@@ -440,6 +441,7 @@ const BarcodeScannerScreen = ({navigation}) => {
         dispatch(
           setCreden({
             ticket: null,
+            zone: null,
             URI: creden.URI,
             WS_URI: creden.WS_URI,
             RTMP_URI: creden.RTMP_URI,
@@ -461,7 +463,7 @@ const BarcodeScannerScreen = ({navigation}) => {
         console.error(error.response.data.detail);
         // Show an alert and navigate to the login page
         Alert.alert(
-          `Alert,${error.response.data.detail}`,
+          `${error.response.data.detail}`,
           'Please check the VIN and VC details and try again',
           [
             {
@@ -517,6 +519,7 @@ const BarcodeScannerScreen = ({navigation}) => {
             dispatch(
               setCreden({
                 ticket: null,
+                zone: null,
                 URI: creden.URI,
                 WS_URI: creden.WS_URI,
                 RTMP_URI: creden.RTMP_URI,
@@ -655,10 +658,10 @@ const BarcodeScannerScreen = ({navigation}) => {
       return (
         <TouchableOpacity
           style={{
-            width: 220,
-            height: 40,
+            width: s(195),
+            height: vs(34),
             // top: 70,
-            borderRadius: 12,
+            borderRadius: ms(12),
             // borderWidth: 3,
             // borderColor: "#3758ff",
             justifyContent: 'center',
@@ -668,7 +671,7 @@ const BarcodeScannerScreen = ({navigation}) => {
             backgroundColor: 'darkgreen',
           }}
           onPress={handleScanAgain}>
-          <Text style={{color: '#fff', fontSize: 17, fontWeight: 'bold'}}>
+          <Text style={{color: '#fff', fontSize: ms(16), fontWeight: 'bold'}}>
             Rescan
           </Text>
         </TouchableOpacity>
@@ -682,10 +685,10 @@ const BarcodeScannerScreen = ({navigation}) => {
       return (
         <TouchableOpacity
           style={{
-            width: 220,
-            height: 40,
-            top: 5,
-            borderRadius: 12,
+            width: s(195),
+            height: vs(34),
+            top: vs(3),
+            borderRadius: ms(12),
             // borderWidth: 3,
             // borderColor: "#3758ff",
             justifyContent: 'center',
@@ -703,7 +706,7 @@ const BarcodeScannerScreen = ({navigation}) => {
           //   });
           // }}
         >
-          <Text style={{color: '#fff', fontSize: 17, fontWeight: 'bold'}}>
+          <Text style={{color: '#fff', fontSize: ms(16), fontWeight: 'bold'}}>
             Proceed
           </Text>
         </TouchableOpacity>
@@ -743,11 +746,16 @@ const BarcodeScannerScreen = ({navigation}) => {
               dispatch(
                 setCreden({
                   ticket: null,
+                  zone: null,
                   URI: creden.URI,
                   WS_URI: creden.WS_URI,
                   RTMP_URI: creden.RTMP_URI,
                 }),
               );
+              AsyncStorage.setItem('token', '');
+              AsyncStorage.setItem('ticket', '');
+              AsyncStorage.setItem('zone', '');
+              AsyncStorage.setItem('isLoggedIn', '');
               console.log('Logout successful', response.data);
               // navigation.navigate('Login');
               navigation.navigate('LoginNav', {screen: 'Login'});
@@ -842,13 +850,13 @@ const BarcodeScannerScreen = ({navigation}) => {
             <View style={[styles.inputContainer, {width: windowWidth}]}>
               <View
                 style={{
-                  margin: 20,
-                  marginBottom: 0,
+                  margin: s(6),
+                  marginBottom: vs(0),
                   flexDirection: 'row',
                   justifyContent: 'space-evenly',
                   width: '80%',
-                  height: 40,
-                  borderRadius: 12,
+                  height: vs(35),
+                  borderRadius: ms(12),
                   borderWidth: 1.5,
                   // borderColor: '#3758ff',
                   borderColor: '#0f113e',
@@ -860,19 +868,19 @@ const BarcodeScannerScreen = ({navigation}) => {
                   source={barcode}
                   style={{
                     resizeMode: 'contain',
-                    height: 28,
-                    width: 28,
-                    right: 20,
+                    height: vs(28),
+                    width: s(26),
+                    right: s(20),
                   }}></Image>
                 <View>
                   {barcode1 ? (
                     <Text
                       style={{
-                        height: 40,
-                        width: 180,
-                        right: 40,
-                        fontSize: 15,
-                        top: 10,
+                        height: vs(35),
+                        width: s(150),
+                        right: s(40),
+                        fontSize: ms(14),
+                        top: vs(9),
                         color: 'black',
                       }}>
                       {barcode1}
@@ -885,11 +893,11 @@ const BarcodeScannerScreen = ({navigation}) => {
                     // />
                     <Text
                       style={{
-                        height: 40,
-                        width: 180,
-                        right: 40,
-                        fontSize: 15,
-                        top: 10,
+                        height: vs(35),
+                        width: s(150),
+                        right: s(40),
+                        fontSize: ms(14),
+                        top: vs(9),
                         color: 'grey',
                       }}>
                       VIN no.
@@ -899,14 +907,14 @@ const BarcodeScannerScreen = ({navigation}) => {
               </View>
               <View
                 style={{
-                  margin: 20,
-                  marginBottom: 4,
-                  marginTop: 12,
+                  margin: s(20),
+                  marginBottom: vs(4),
+                  marginTop: vs(8),
                   flexDirection: 'row',
                   justifyContent: 'space-evenly',
                   width: '80%',
-                  height: 40,
-                  borderRadius: 12,
+                  height: vs(35),
+                  borderRadius: ms(12),
                   borderWidth: 1.5,
                   // borderColor: '#3758ff',
                   borderColor: '#0f113e',
@@ -918,19 +926,19 @@ const BarcodeScannerScreen = ({navigation}) => {
                   source={barcode}
                   style={{
                     resizeMode: 'contain',
-                    height: 28,
-                    width: 28,
-                    right: 20,
+                    height: vs(28),
+                    width: s(26),
+                    right: s(20),
                   }}></Image>
                 <View>
                   {barcode2 ? (
                     <Text
                       style={{
-                        height: 40,
-                        width: 180,
-                        right: 40,
-                        fontSize: 15,
-                        top: 10,
+                        height: vs(35),
+                        width: s(150),
+                        right: s(40),
+                        fontSize: ms(14),
+                        top: vs(9),
                         color: 'black',
                       }}>
                       {barcode2}
@@ -943,11 +951,11 @@ const BarcodeScannerScreen = ({navigation}) => {
                     // />
                     <Text
                       style={{
-                        height: 40,
-                        width: 180,
-                        right: 40,
-                        fontSize: 15,
-                        top: 10,
+                        height: vs(35),
+                        width: s(150),
+                        right: s(40),
+                        fontSize: ms(14),
+                        top: vs(9),
                         color: 'grey',
                       }}>
                       VC no.
@@ -955,27 +963,6 @@ const BarcodeScannerScreen = ({navigation}) => {
                   )}
                 </View>
               </View>
-              {/* <View style={styles.inputbar}>
-          <TextInput
-            style={styles.input}
-            placeholder={barcode1 ? barcode1 : "VIN no."}
-            value={manualInput1}
-            keyboardType="numeric"
-            // placeholderTextColor="black"
-            onChangeText={(text) => setManualInput1(text)}
-          />
-        </View>
-        <View style={styles.inputbar}>
-          <TextInput
-            style={styles.input}
-            placeholder={barcode2 ? barcode2 : "VC no."}
-            value={manualInput2}
-            keyboardType="numeric"
-            // placeholderTextColor="black"
-            onChangeText={(text) => setManualInput2(text)}
-          />
-        </View> */}
-
               {renderScanButton()}
               {renderPostButton()}
             </View>
@@ -991,22 +978,22 @@ const BarcodeScannerScreen = ({navigation}) => {
             }}>
             <Text
               style={{
-                fontSize: 17,
+                fontSize: ms(16),
                 color: '#7f7f7f',
                 textAlign: 'center',
                 // top: 10,
-                bottom: 30,
+                bottom: vs(28),
               }}>
               Enter the of VIN and VC details of the vehicle
             </Text>
             <View
               style={{
-                margin: 20,
+                margin: s(20),
                 flexDirection: 'row',
                 justifyContent: 'space-evenly',
                 width: '80%',
-                height: 40,
-                borderRadius: 12,
+                height: vs(35),
+                borderRadius: ms(12),
                 borderWidth: 1.5,
                 // borderColor: '#3758ff',
                 borderColor: '#0f113e',
@@ -1018,17 +1005,17 @@ const BarcodeScannerScreen = ({navigation}) => {
                 source={barcode}
                 style={{
                   resizeMode: 'contain',
-                  height: 28,
-                  width: 28,
-                  right: 20,
+                  height: vs(28),
+                  width: s(26),
+                  right: s(20),
                 }}></Image>
               <View>
                 <TextInput
                   style={{
-                    height: 40,
-                    width: 180,
-                    right: 40,
-                    fontSize: 15,
+                    height: vs(40),
+                    width: s(160),
+                    right: s(35),
+                    fontSize: ms(15),
                     color: 'black',
                   }}
                   placeholder="VIN no."
@@ -1041,13 +1028,12 @@ const BarcodeScannerScreen = ({navigation}) => {
             </View>
             <View
               style={{
-                margin: 20,
-                marginTop: 6,
+                margin: s(5),
                 flexDirection: 'row',
                 justifyContent: 'space-evenly',
                 width: '80%',
-                height: 40,
-                borderRadius: 12,
+                height: vs(35),
+                borderRadius: ms(12),
                 borderWidth: 1.5,
                 // borderColor: '#3758ff',
                 borderColor: '#0f113e',
@@ -1059,17 +1045,17 @@ const BarcodeScannerScreen = ({navigation}) => {
                 source={barcode}
                 style={{
                   resizeMode: 'contain',
-                  height: 28,
-                  width: 28,
-                  right: 20,
+                  height: vs(28),
+                  width: s(26),
+                  right: s(20),
                 }}></Image>
               <View>
                 <TextInput
                   style={{
-                    height: 40,
-                    width: 180,
-                    right: 40,
-                    fontSize: 15,
+                    height: vs(40),
+                    width: s(160),
+                    right: s(35),
+                    fontSize: ms(15),
                     color: 'black',
                   }}
                   placeholder="VC no."
@@ -1082,10 +1068,12 @@ const BarcodeScannerScreen = ({navigation}) => {
             </View>
             <TouchableOpacity
               style={{
-                width: 220,
-                height: 40,
-                top: 40,
-                borderRadius: 12,
+                width: s(195),
+                height: vs(34),
+                top: vs(30),
+                borderRadius: ms(12),
+                // borderWidth: 3,
+                // borderColor: "#3758ff",
                 justifyContent: 'center',
                 alignItems: 'center',
                 zIndex: 2,
@@ -1115,7 +1103,7 @@ const BarcodeScannerScreen = ({navigation}) => {
 
 export default BarcodeScannerScreen;
 
-const styles = StyleSheet.create({
+const styles = ScaledSheet.create({
   container: {
     flex: 1,
     flexDirection: 'column',
@@ -1140,14 +1128,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: '50%',
     left: '50%',
-    marginTop: -25,
-    marginLeft: -25,
+    marginTop: '-25@vs',
+    marginLeft: '-25@s',
   },
   buttonContainer: {
     width: '80%',
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: '20@vs',
   },
   inputContainer: {
     // flex: 1,
@@ -1156,15 +1144,15 @@ const styles = StyleSheet.create({
     // width: '100%',
     backgroundColor: '#f2f2f2',
     // backgroundColor: 'pink',
-    bottom: 50,
+    bottom: '50@vs',
   },
   input: {
-    height: 40,
+    height: '40@vs',
     borderColor: 'gray',
     borderWidth: 1,
     width: '100%',
-    margin: 10,
-    paddingHorizontal: 10,
+    margin: '10@s',
+    paddingHorizontal: '10@s',
   },
   inputbar: {
     display: 'flex',
@@ -1173,7 +1161,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   text: {
-    fontSize: 15,
+    fontSize: '15@ms',
     color: 'black',
     fontWeight: 'bold',
   },

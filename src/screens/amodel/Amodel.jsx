@@ -14,8 +14,10 @@ import {
   Keyboard,
   Modal,
   ScrollView,
+  FlatList,
 } from 'react-native';
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
+import {s, vs, ms, ScaledSheet} from 'react-native-size-matters';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -41,6 +43,10 @@ import logout from '../../utils/images/logout.png';
 import logoTyre from '../../utils/images/logoTyre.png';
 import question from '../../utils/images/question.png';
 import ham from '../../utils/images/ham.png';
+import deleteIcon from '../../utils/images/delete.png';
+import pencil from '../../utils/images/vcPencil.png';
+import search from '../../utils/images/search.png';
+import searchblack from '../../utils/images/searchblack.png';
 
 // import GoodVibes from "../../../assets/fonts/GreatVibes-Regular.ttf";
 import {URI} from '@env';
@@ -66,17 +72,29 @@ const reviewSchema = yup.object({
 });
 
 const Addmodel = ({navigation}) => {
+  const textInputRef = useRef(null);
   const [image, setImage] = useState(null);
   const [imguri, setImguri] = useState('');
   const [vc, setVc] = useState('');
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [listVisible, setListVisible] = useState(false);
+  const [vcList, setVcList] = useState([]);
+  const [filteredVcList, setFilteredVcList] = useState([]); // State for filtered list
+  const [editedVc, setEditedVc] = useState('');
+
+  const handleTextInputClick = () => {
+    if (textInputRef.current) {
+      textInputRef.current.blur();
+      textInputRef.current.focus();
+    }
+  };
 
   const dispatch = useDispatch();
   const globalToken = useSelector(state => state.token.tokenGlobal);
   const creden = useSelector(state => state.creden.creden);
 
-  console.log('URI:', URI);
+  console.log('URI:', creden.URI);
 
   const onSubmit = async values => {
     //Alert the user
@@ -112,7 +130,7 @@ const Addmodel = ({navigation}) => {
 
     try {
       // Send the data using Axios
-      const response = await axios.post(`${URI}/add_vc/`, dataToSend, {
+      const response = await axios.post(`${creden.URI}/add_vc/`, dataToSend, {
         params: {
           token: globalToken,
         },
@@ -121,6 +139,7 @@ const Addmodel = ({navigation}) => {
           accept: 'application/json',
         },
       });
+      setEditedVc('');
       console.log('Response:', response.data);
 
       // Show success message or perform any other actions
@@ -146,7 +165,7 @@ const Addmodel = ({navigation}) => {
           onPress: async () => {
             try {
               const response = await axios.post(
-                `${URI + '/logout'}?token=${globalToken}`,
+                `${creden.URI + '/logout'}?token=${globalToken}`,
               );
               dispatch(
                 setCreden({
@@ -258,7 +277,7 @@ const Addmodel = ({navigation}) => {
       // console.log("Image uploaded successfully", response.data);
       // setImguri(response.data);
 
-      let res = await fetch(`${URI + '/upload_vc_image/'}`, {
+      let res = await fetch(`${creden.URI + '/upload_vc_image/'}`, {
         method: 'post',
         body: formData,
         headers: {
@@ -284,6 +303,163 @@ const Addmodel = ({navigation}) => {
     }
   };
 
+  const fetchVcList = async () => {
+    console.log('globalToken:', globalToken);
+    try {
+      const response = await axios.get(`${creden.URI}/vc_list/`, {
+        params: {
+          token: globalToken,
+        },
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+      console.log('vclist:', response.data.cars);
+      setVcList(response.data.cars);
+      setFilteredVcList(response.data.cars); // Initialize filtered list with all VCs
+    } catch (error) {
+      console.error('Error fetching data: ', error);
+    }
+  };
+
+  const vcDelete = async vc => {
+    Alert.alert(
+      'Confirm Delete',
+      `Do you really want to remove VC no ${vc} ?`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Remove',
+          onPress: async () => {
+            // console.log('globalToken:', globalToken);
+            try {
+              const response = await axios.delete(`${creden.URI}/vc/${vc}`, {
+                params: {
+                  token: globalToken,
+                },
+                headers: {
+                  Accept: 'application/json',
+                },
+              });
+              console.log('vc_deleted', response.data);
+              fetchVcList();
+            } catch (error) {
+              console.error('Error deleting vc: ', error);
+            }
+          },
+          style: 'destructive',
+        },
+      ],
+      {cancelable: false},
+    );
+  };
+
+  useEffect(() => {
+    fetchVcList();
+  }, []);
+
+  const renderItem = ({item, index}) => (
+    <View
+      style={{
+        marginTop: vs(10),
+        padding: s(10),
+        paddingHorizontal: s(2),
+        // marginVertical: vs(8),
+        backgroundColor: '#f9f9f9',
+        borderRadius: ms(5),
+      }}>
+      <View
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          // backgroundColor: 'red',
+        }}>
+        <View style={{display: 'flex', flexDirection: 'row'}}>
+          <View
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              borderRadius: ms(15),
+              // padding: s(3),
+              width: s(30),
+              height: s(30),
+              marginRight: s(5),
+              backgroundColor: 'blue',
+            }}>
+            <Text
+              style={{
+                fontSize: ms(20),
+                color: 'white',
+              }}>
+              {index + 1}
+            </Text>
+          </View>
+          <View>
+            <Text
+              style={{
+                fontSize: ms(16),
+                color: 'black',
+              }}>
+              {item.vc}
+            </Text>
+            <Text
+              style={{
+                fontSize: ms(9),
+                color: 'black',
+              }}>
+              {item.mod_num}
+            </Text>
+          </View>
+        </View>
+
+        <View
+          style={{
+            display: 'flex',
+            // alignSelf: "flex-end",
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            // backgroundColor: 'pink',
+            width: s(70),
+            marginRight: s(5),
+          }}>
+          {/* <Text>hello</Text> */}
+          <TouchableOpacity
+            onPress={() => {
+              setImguri(item.imguri);
+              setEditedVc(item.vc);
+              setVisible(true);
+            }}>
+            <Image
+              source={pencil}
+              style={{resizeMode: 'contain', height: vs(25), width: s(30)}}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => vcDelete(item.vc)}>
+            <Image
+              source={deleteIcon}
+              style={{resizeMode: 'contain', height: vs(25), width: s(25)}}
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+
+  // Function to filter VC list based on search query
+  const handleSearch = query => {
+    const filteredList = vcList.filter(vcItem =>
+      vcItem.vc.toLowerCase().includes(query.toLowerCase()),
+    );
+    setFilteredVcList(filteredList);
+  };
+
   return (
     <SafeAreaView style={styles.safeContainer}>
       <StatusBar />
@@ -295,11 +471,11 @@ const Addmodel = ({navigation}) => {
         tabRightFunc={() => navigation.navigate('AboutApp')}
       />
 
-      <View style={styles.linearGradient}>
-        <View style={{top: 20}}>
+      <View style={[styles.linearGradient]}>
+        <View style={{top: 10}}>
           <Text
             style={{
-              fontSize: 17,
+              fontSize: ms(16),
               color: '#7f7f7f',
               // textAlign: "center",
             }}>
@@ -308,13 +484,13 @@ const Addmodel = ({navigation}) => {
         </View>
         <View
           style={{
-            top: 40,
+            top: vs(8),
             flexDirection: 'column',
             justifyContent: 'space-evenly',
-            height: 100,
-            width: '80%',
+            height: vs(80),
+            width: '80.5%',
           }}>
-          <Text style={{fontSize: 16, fontWeight: 'bold', color: 'black'}}>
+          <Text style={{fontSize: ms(15), fontWeight: 'bold', color: 'black'}}>
             VC no.
           </Text>
           <View
@@ -322,18 +498,23 @@ const Addmodel = ({navigation}) => {
               width: '100%',
               flexDirection: 'row',
               alignItems: 'center',
-              marginBottom: 20,
+              marginBottom: vs(18),
               borderWidth: 1.5,
               borderColor: '#3758ff',
-              borderRadius: 12,
-              paddingHorizontal: 10,
+              borderRadius: ms(12),
+              paddingHorizontal: s(5),
               backgroundColor: 'white',
               // top: 40,
             }}>
             <TextInput
               placeholder=" VC no."
               placeholderTextColor="grey"
-              style={{width: '100%', height: 40, fontSize: 16, color: 'black'}}
+              style={{
+                width: '100%',
+                height: vs(33),
+                fontSize: ms(14),
+                color: 'black',
+              }}
               value={vc}
               onChangeText={text => setVc(text)}
             />
@@ -347,7 +528,7 @@ const Addmodel = ({navigation}) => {
             // alignItems: "center",
             justifyContent: 'space-between',
             // backgroundColor: "red",
-            top: 40,
+            // top: 5,
           }}>
           <View>
             <TouchableOpacity
@@ -357,10 +538,10 @@ const Addmodel = ({navigation}) => {
                 backgroundColor: '#d9d9d9',
                 borderWidth: 2,
                 borderColor: '#fff',
-                borderRadius: 10,
+                borderRadius: s(10),
                 justifyContent: 'center',
                 alignItems: 'center',
-                padding: 5,
+                padding: s(4),
               }}
               onPress={selectImage}>
               <Text style={{color: 'black'}}>Choose image file</Text>
@@ -371,8 +552,8 @@ const Addmodel = ({navigation}) => {
               backgroundColor: '#fff',
               borderWidth: 1.5,
               // top: 40,
-              height: 160,
-              width: 160,
+              height: s(140),
+              width: s(140),
               justifyContent: 'center',
               alignItems: 'center',
             }}>
@@ -381,8 +562,8 @@ const Addmodel = ({navigation}) => {
                 source={{uri: image}}
                 style={{
                   resizeMode: 'contain',
-                  height: 160,
-                  width: 160,
+                  height: s(140),
+                  width: s(140),
                   // top: 50,
                 }}
               />
@@ -394,10 +575,10 @@ const Addmodel = ({navigation}) => {
 
         <TouchableOpacity
           style={{
-            width: 220,
-            height: 40,
-            top: 70,
-            borderRadius: 12,
+            width: s(200),
+            height: vs(35),
+            top: 10,
+            borderRadius: ms(12),
             // borderWidth: 3,
             // borderColor: "#3758ff",
             justifyContent: 'center',
@@ -406,10 +587,109 @@ const Addmodel = ({navigation}) => {
             backgroundColor: '#3758ff',
           }}
           onPress={uploadImage}>
-          <Text style={{color: '#fff', fontWeight: 'bold', letterSpacing: 0.8}}>
+          <Text
+            style={{color: '#fff', fontWeight: 'bold', letterSpacing: ms(0.8)}}>
             Proceed
           </Text>
         </TouchableOpacity>
+
+        <View
+          style={{
+            // flex: 1,
+            marginTop: vs(27),
+            marginLeft: s(8),
+            marginRight: s(8),
+            borderRadius: ms(10),
+            padding: s(8),
+            width: '95%',
+            height: '41.5%',
+            // backgroundColor: 'red',
+          }}>
+          <View
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              // alignItems: 'center',
+              backgroundColor: '#374aff',
+              flex: 1,
+              paddingTop: vs(4),
+              paddingHorizontal: s(10),
+              borderRadius: ms(10),
+            }}>
+            <View
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                // width: 200,
+                // height: 30,
+                // alignSelf: 'center',
+                // borderRadius: 30,
+                // borderWidth: 3,
+                // borderColor: "#31367b",
+                justifyContent: 'center',
+                alignItems: 'center',
+                zIndex: 2,
+                // backgroundColor: '#31367b',
+                marginBottom: vs(4),
+              }}>
+              <Text
+                style={{
+                  color: '#fff',
+                  fontSize: ms(16),
+                  letterSpacing: ms(1.5),
+                  textAlign: 'center',
+                  textDecorationLine: 'underline',
+                  // alignSelf: 'center',
+
+                  //   justifyContent: "center",
+                  //   alignItems: "center",
+                }}>
+                List of current VC's
+              </Text>
+              <TouchableOpacity
+                style={{
+                  // backgroundColor: 'red',
+                  // alignSelf: 'flex-end',
+                  position: 'absolute',
+                  right: s(8),
+                  top: vs(2),
+                }}
+                onPress={() => {
+                  // setImguri(item.imguri);
+                  // setEditedVc(item.vc);
+                  setListVisible(true);
+                  setTimeout(() => {
+                    if (textInputRef.current) {
+                      // textInputRef.current.blur();
+                      textInputRef.current.focus();
+                    }
+                  }, 800);
+
+                  // if (listVisible && textInputRef.current) {
+                  //   textInputRef.current.focus();
+                  //   console.log('done');
+                  // }
+                }}>
+                <Image
+                  source={search}
+                  style={{resizeMode: 'contain', height: vs(22), width: s(20)}}
+                />
+              </TouchableOpacity>
+            </View>
+            {/* <TextInput
+              style={{width: '100%', height: 40, fontSize: 16, color: 'black'}}
+              placeholder="Search VC number"
+              placeholderTextColor="grey"
+              onChangeText={handleSearch} // Update filtered list based on search input
+            /> */}
+
+            <FlatList
+              data={filteredVcList} // Render the filtered list
+              keyExtractor={item => item.id}
+              renderItem={renderItem}
+            />
+          </View>
+        </View>
       </View>
       {!keyboardVisible && (
         <Tabs
@@ -421,9 +701,137 @@ const Addmodel = ({navigation}) => {
         />
       )}
       <Modal
+        visible={listVisible}
+        animationType="fade"
+        onRequestClose={() => {
+          setListVisible(false);
+          textInputRef.current.blur();
+        }}>
+        <View
+          style={{
+            flex: 1,
+            // marginTop: 30,
+            display: 'flex',
+            // justifyContent:"center",
+            alignItems: 'center',
+            marginLeft: s(10),
+            marginRight: ms(10),
+            borderRadius: s(10),
+            padding: s(10),
+            paddingTop: vs(30),
+            width: '95%',
+            height: '70%',
+            // backgroundColor: "red",
+          }}>
+          <View
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              // alignItems: 'center',
+              backgroundColor: '#374aff',
+              // flex: 1,
+              height: '91%',
+              padding: s(12),
+              paddingHorizontal: s(12),
+              borderRadius: ms(10),
+            }}>
+            <View
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                // width: 200,
+                // height: 30,
+                // alignSelf: 'center',
+                // borderRadius: 30,
+                // borderWidth: 3,
+                // borderColor: "#31367b",
+                justifyContent: 'center',
+                alignItems: 'center',
+                zIndex: 2,
+                // backgroundColor: '#31367b',
+                marginBottom: vs(15),
+              }}>
+              <Text
+                style={{
+                  color: '#fff',
+                  fontSize: ms(17),
+                  letterSpacing: ms(1.5),
+                  textAlign: 'center',
+                  textDecorationLine: 'underline',
+                  // alignSelf: 'center',
+
+                  //   justifyContent: "center",
+                  //   alignItems: "center",
+                }}>
+                List of current VC's
+              </Text>
+              <TouchableOpacity
+                style={{
+                  // backgroundColor: 'red',
+                  // alignSelf: 'flex-end',
+                  position: 'absolute',
+                  left: s(10),
+                  // top: 2,
+                }}
+                onPress={() => {
+                  // setImguri(item.imguri);
+                  // setEditedVc(item.vc);
+                  setListVisible(false);
+                }}>
+                <Text
+                  style={{fontSize: ms(25), fontWeight: 'bold', color: '#fff'}}>
+                  ←
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <View
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                paddingHorizontal: s(5),
+                borderRadius: ms(10),
+                width: '100%',
+                height: vs(35),
+                fontSize: ms(16),
+                backgroundColor: '#fff',
+                marginBottom: vs(5),
+              }}>
+              <TextInput
+                ref={textInputRef}
+                style={{
+                  color: 'black',
+                  // backgroundColor: 'red',
+                  width: '100%',
+                }}
+                placeholder="Search VC"
+                placeholderTextColor="grey"
+                onChangeText={handleSearch} // Update filtered list based on search input
+              ></TextInput>
+              <TouchableOpacity onPress={handleTextInputClick}>
+                <Image
+                  source={searchblack}
+                  style={{resizeMode: 'contain', height: vs(24), width: s(24)}}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <FlatList
+              data={filteredVcList} // Render the filtered list
+              keyExtractor={item => item.id}
+              renderItem={renderItem}
+            />
+          </View>
+        </View>
+      </Modal>
+      <Modal
         visible={visible}
         animationType="fade"
-        onRequestClose={() => setVisible(false)}>
+        onRequestClose={() => {
+          setVisible(false);
+          setEditedVc('');
+        }}>
         <View
           style={{
             flex: 1,
@@ -434,7 +842,7 @@ const Addmodel = ({navigation}) => {
           <View style={styles.container}>
             <Formik
               initialValues={{
-                mod_num: '',
+                mod_num: editedVc ? editedVc : '',
                 num_axles: 0,
                 axles_data: [
                   {
@@ -688,45 +1096,43 @@ const Addmodel = ({navigation}) => {
 
 export default Addmodel;
 
-const styles = StyleSheet.create({
+const styles = ScaledSheet.create({
   safeContainer: {
     flex: 1,
   },
-
   linearGradient: {
     flex: 1,
     alignItems: 'center',
   },
-
   container: {
     flex: 1,
-    margin: 15,
+    margin: '15@s',
     width: '90%',
     // backgroundColor: "red",
   },
   input: {
-    borderWidth: 1,
+    borderWidth: '1@s',
     borderColor: '#ddd',
-    padding: 10,
-    fontSize: 18,
-    borderRadius: 6,
-    marginBottom: 10,
+    padding: '10@s',
+    fontSize: '18@ms',
+    borderRadius: '6@s',
+    marginBottom: '10@vs',
     color: 'black',
   },
   errText: {
     color: 'crimson',
     fontWeight: 'bold',
-    marginBottom: 10,
-    marginTop: 6,
+    marginBottom: '10@vs',
+    marginTop: '6@vs',
   },
   axleScrollView: {
-    maxHeight: 300,
-    marginBottom: 10,
+    maxHeight: '300@vs',
+    marginBottom: '10@vs',
   },
   wheelScrollView: {
-    maxHeight: 200,
-    borderRadius: 5,
+    maxHeight: '200@vs',
+    borderRadius: '5@s',
     backgroundColor: '#b3b3b3',
-    marginBottom: 10,
+    marginBottom: '10@vs',
   },
 });

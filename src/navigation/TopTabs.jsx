@@ -6,6 +6,7 @@ import {
   useRoute,
   useFocusEffect,
 } from '@react-navigation/native';
+import {s, vs, ms, ScaledSheet} from 'react-native-size-matters';
 
 // import AboutApp from "../screens/about/AboutApp";
 // import AboutCoEAMT from "../screens/about/AboutCoEAMT";
@@ -37,12 +38,12 @@ const TopTabs = props => {
         zIndex: 1,
         flexDirection: 'row',
         justifyContent: 'space-evenly',
-        height: 90,
+        height: vs(70),
         width: '100%',
         // backgroundColor: '#31367b',
         backgroundColor: '#0f113e',
-        borderBottomLeftRadius: 40,
-        borderBottomRightRadius: 40,
+        borderBottomLeftRadius: s(40),
+        borderBottomRightRadius: s(40),
       }}>
       <TouchableOpacity
         style={{
@@ -53,10 +54,7 @@ const TopTabs = props => {
         }}
         // onPress={() => navigation.navigate('Profile')}>
         onPress={props.tabLeftFunc}>
-        <Image
-          source={props.left}
-          style={{resizeMode: 'contain', width: 25, height: 25}}
-        />
+        <Image source={props.left} style={{width: s(20), height: s(15)}} />
       </TouchableOpacity>
       <TouchableOpacity
         style={{
@@ -71,8 +69,8 @@ const TopTabs = props => {
           source={props.center}
           style={{
             resizeMode: 'contain',
-            width: 100,
-            height: 90,
+            width: s(80),
+            height: vs(90),
           }}
         />
       </TouchableOpacity>
@@ -95,7 +93,7 @@ const TopTabs = props => {
           // }
           props.tabRightFunc
         }>
-        <Image source={props.right} style={{width: 25, height: 23}} />
+        <Image source={props.right} style={{width: s(22), height: s(22)}} />
       </TouchableOpacity>
       {/* Add more TouchableOpacity components for other tabs */}
     </View>

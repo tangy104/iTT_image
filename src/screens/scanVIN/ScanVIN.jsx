@@ -15,6 +15,7 @@ import {
   BackHandler,
 } from 'react-native';
 import React, {useState, useEffect} from 'react';
+import {ScaledSheet, s, vs, ms} from 'react-native-size-matters';
 import DeviceInfo from 'react-native-device-info';
 import Dialog from 'react-native-dialog';
 import {useFocusEffect} from '@react-navigation/native';
@@ -31,8 +32,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 //   FadeInUp,
 //   FadeInDown,
 // } from 'react-native-reanimated';
+import {useDispatch, useSelector} from 'react-redux';
+import {
+  connectWebSocket,
+  startScreenCapture,
+  stopScreenCapture,
+} from '../../state/screenSharingSlice';
 import axios from 'axios';
-import {useSelector, useDispatch} from 'react-redux';
 import {setTokenGlobal} from '../../state/tokenslice';
 import {setCreden} from '../../state/credenSlice';
 
@@ -78,10 +84,13 @@ const ScanVIN = ({navigation}) => {
 
   const [isDialogVisible, setIsDialogVisible] = useState(false);
   const [isCurrentlyNotLogged, setIsCurrentlyNotLogged] = useState(false);
+  const [deviceId, setDeviceId] = useState('');
 
   const dispatch = useDispatch();
   const globalToken = useSelector(state => state.token.tokenGlobal);
   const creden = useSelector(state => state.creden.creden);
+
+  const {isCapturing, isConnected} = useSelector(state => state.screenSharing);
 
   console.log('uri_new-', creden.URI);
   console.log('ws_uri-', creden.WS_URI);
@@ -93,11 +102,13 @@ const ScanVIN = ({navigation}) => {
     // const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
     const token = await AsyncStorage.getItem('token');
     const ticket = await AsyncStorage.getItem('ticket');
+    const zone = await AsyncStorage.getItem('zone');
     dispatch(setTokenGlobal(token));
     console.log('token from scan vin:', token);
     dispatch(
       setCreden({
         ticket: ticket,
+        zone: zone,
         URI: creden.URI,
         WS_URI: creden.WS_URI,
         RTMP_URI: creden.RTMP_URI,
@@ -152,10 +163,88 @@ const ScanVIN = ({navigation}) => {
     }),
   );
 
+  const fetchDeviceId = async () => {
+    const id = await DeviceInfo.getAndroidId();
+    setDeviceId(id);
+    console.log('deviceId=', deviceId);
+  };
+
   useEffect(() => {
+    fetchDeviceId();
     checkLogin();
     shiftExist();
   }, []);
+
+  function changePort(url, newPort) {
+    // Regular expression to match the port number
+    const regex = /:(\d{4})/;
+    return url.replace(regex, `:${newPort}`);
+  }
+
+  useEffect(() => {
+    const newUrl = changePort(creden.WS_URI, '1338');
+    console.log('newUrl:', newUrl);
+
+    dispatch(connectWebSocket(newUrl));
+
+    return () => {
+      dispatch(stopScreenCapture());
+    };
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (deviceId) {
+      setTimeout(() => {
+        handleStartCapture();
+      }, 800);
+    }
+  }, [deviceId]); // Only call handleStartCapture when deviceId is updated
+
+  // const handleStartCapture = async () => {
+  //   const ticketNumber = await AsyncStorage.getItem('ticket');
+  //   console.log('deviceId in start capture:', deviceId);
+  //   if (deviceId === 'f80b60565be51cba' || deviceId === 'ce52f8bf60f2db5f') {
+  //     dispatch(startScreenCapture('device1', ticketNumber));
+  //     console.log('HHT01');
+  //   } else if (
+  //     deviceId === '3f879629b94e3dc0' ||
+  //     deviceId === '546c2b6e3a136ed5'
+  //   ) {
+  //     dispatch(startScreenCapture('device2', ticketNumber));
+  //     console.log('HHT02');
+  //   } else if (
+  //     deviceId === '04dfb65d0da8d600' ||
+  //     deviceId === 'fdc1142eb2069aef'
+  //   ) {
+  //     dispatch(startScreenCapture('device3', ticketNumber));
+  //     console.log('HHT03');
+  //   } else if (deviceId === '25fabf8dca53aa2e') {
+  //     dispatch(startScreenCapture('device4', ticketNumber));
+  //     console.log('HHT04');
+  //   } else {
+  //     console.log('HHT not registered');
+  //   }
+  // };
+
+  const handleStartCapture = async () => {
+    const ticketNumber = await AsyncStorage.getItem('ticket');
+    console.log('deviceId in start capture:', deviceId);
+    if (deviceId === '2920cf7630acdfb3') {
+      dispatch(startScreenCapture('device1', ticketNumber));
+      console.log('HHT01');
+    } else if (deviceId === '05e935b6c106609a') {
+      dispatch(startScreenCapture('device2', ticketNumber));
+      console.log('HHT02');
+    } else if (deviceId === '65127fcf0577844d') {
+      dispatch(startScreenCapture('device3', ticketNumber));
+      console.log('HHT03');
+    } else if (deviceId === '25fabf8dca53aa2e') {
+      dispatch(startScreenCapture('device4', ticketNumber));
+      console.log('HHT04');
+    } else {
+      console.log('HHT not registered');
+    }
+  };
 
   //posting by axios
   const handleLogin = async values => {
@@ -254,6 +343,7 @@ const ScanVIN = ({navigation}) => {
               dispatch(
                 setCreden({
                   ticket: null,
+                  zone: null,
                   URI: creden.URI,
                   WS_URI: creden.WS_URI,
                   RTMP_URI: creden.RTMP_URI,
@@ -261,6 +351,7 @@ const ScanVIN = ({navigation}) => {
               );
               AsyncStorage.setItem('token', '');
               AsyncStorage.setItem('ticket', '');
+              AsyncStorage.setItem('zone', '');
               AsyncStorage.setItem('isLoggedIn', '');
               console.log('Logout successful', response.data);
               // navigation.navigate('Login');
@@ -271,6 +362,7 @@ const ScanVIN = ({navigation}) => {
                 dispatch(
                   setCreden({
                     ticket: null,
+                    zone: null,
                     URI: creden.URI,
                     WS_URI: creden.WS_URI,
                     RTMP_URI: creden.RTMP_URI,
@@ -278,6 +370,7 @@ const ScanVIN = ({navigation}) => {
                 );
                 AsyncStorage.setItem('token', '');
                 AsyncStorage.setItem('ticket', '');
+                AsyncStorage.setItem('zone', '');
                 AsyncStorage.setItem('isLoggedIn', '');
                 // console.log('Logout successful', response.data);
                 // navigation.navigate('Login');
@@ -336,7 +429,7 @@ const ScanVIN = ({navigation}) => {
     const uid = await DeviceInfo.getAndroidId();
     try {
       // If the VIN number does not exist, perform a POST request to create a new entry
-      response = await axios.post(creden.URI + `/htt_reg`, null, {
+      response = await axios.post(creden.URI + `/hht_reg`, null, {
         params: {
           uid: uid,
         },
@@ -345,7 +438,7 @@ const ScanVIN = ({navigation}) => {
           // Authorization: "Bearer lemon",
         },
       });
-      console.log('response data for registering HTT:', response.data);
+      console.log('response data for registering HHT:', response.data);
       AsyncStorage.setItem('uid', uid);
     } catch (error) {
       // Handle the error response
@@ -364,7 +457,7 @@ const ScanVIN = ({navigation}) => {
       let response;
       const uid = await DeviceInfo.getAndroidId();
       try {
-        response = await axios.get(creden.URI + `/htt/${uid}`, null, {
+        response = await axios.get(creden.URI + `/hht/${uid}`, null, {
           headers: {
             Accept: 'application/json',
           },
@@ -417,6 +510,7 @@ const ScanVIN = ({navigation}) => {
     dispatch(
       setCreden({
         ticket: null,
+        zone: null,
         URI: creden.URI,
         WS_URI: creden.WS_URI,
         RTMP_URI: creden.RTMP_URI,
@@ -424,6 +518,7 @@ const ScanVIN = ({navigation}) => {
     );
     AsyncStorage.setItem('token', '');
     AsyncStorage.setItem('ticket', '');
+    AsyncStorage.setItem('zone', '');
     AsyncStorage.setItem('isLoggedIn', '');
     // navigation.navigate('Login');
     setIsCurrentlyNotLogged(false);
@@ -446,7 +541,7 @@ const ScanVIN = ({navigation}) => {
           style={{
             // width: 120,
             // height: 40,
-            top: -100,
+            // top: -100,
             // borderRadius: 12,
             // borderWidth: 3,
             // borderColor: "#3758ff",
@@ -455,17 +550,17 @@ const ScanVIN = ({navigation}) => {
             alignItems: 'center',
             zIndex: 2,
             // backgroundColor: '#3758ff',
-            marginRight: 10,
+            marginRight: s(10),
             flexDirection: 'row',
-          }}
-          onPress={() => navigation.navigate('Amodel')}>
+            bottom: vs(60),
+          }}>
           <Text
             style={{
-              fontSize: 17,
+              fontSize: ms(17),
               color: '#7f7f7f',
               textAlign: 'center',
               // top: 10,
-              marginRight: 40,
+              marginRight: s(30),
             }}>
             Add new VC here →
           </Text>
@@ -476,7 +571,7 @@ const ScanVIN = ({navigation}) => {
                 resizeMode: 'contain',
                 transform: 'scale(1.2)',
                 // alignItems: 'center',
-                right: 10,
+                right: s(10),
               }}
             />
           </TouchableOpacity>
@@ -487,15 +582,15 @@ const ScanVIN = ({navigation}) => {
           style={{
             resizeMode: 'contain',
             // backgroundColor: "red",
-            height: 160,
-            bottom: 60,
+            height: vs(160),
+            bottom: vs(50),
             //   width: 80
           }}></Image>
         <View
           style={{
-            width: 180,
-            height: 38,
-            borderRadius: 30,
+            width: s(160),
+            height: vs(35),
+            borderRadius: ms(30),
             // borderWidth: 3,
             // borderColor: "#31367b",
             justifyContent: 'center',
@@ -503,26 +598,28 @@ const ScanVIN = ({navigation}) => {
             zIndex: 2,
             backgroundColor: '#0f113e',
             // backgroundColor: '#31367b',
+            bottom: vs(30),
           }}>
-          <Text style={{color: '#fff', fontSize: 17, letterSpacing: 1.5}}>
+          <Text
+            style={{color: '#fff', fontSize: ms(17), letterSpacing: ms(1.5)}}>
             Step-1
           </Text>
         </View>
         <Text
           style={{
-            fontSize: 17,
+            fontSize: ms(17),
             color: '#7f7f7f',
             textAlign: 'center',
-            top: 10,
+            bottom: vs(20),
           }}>
           Scan the barcodes of VIN and VC of a car
         </Text>
         <TouchableOpacity
           style={{
-            width: 220,
-            height: 40,
-            top: 70,
-            borderRadius: 12,
+            width: s(170),
+            height: vs(35),
+            top: vs(10),
+            borderRadius: ms(12),
             // borderWidth: 3,
             // borderColor: "#3758ff",
             justifyContent: 'center',
@@ -684,7 +781,7 @@ const ScanVIN = ({navigation}) => {
 
 export default ScanVIN;
 
-const styles = StyleSheet.create({
+const styles = ScaledSheet.create({
   safeContainer: {
     flex: 1,
     // backgroundColor: '#ffc0c8',
@@ -709,103 +806,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     // justifyContent: "center",
   },
-  text1: {
-    // position: "absolute",
-    top: 70,
-    color: '#d9d9d9',
-    fontSize: 20,
-    fontWeight: 'bold',
-    letterSpacing: 3,
-    // flex:1,
-  },
-  text2: {
-    // position: "absolute",
-    top: 60,
-    // left: 22,
-    color: '#fff',
-    fontSize: 20,
-    // fontWeight: "bold",
-    // fontFamily: 'Allura_400Regular',
-    fontStyle: 'italic',
-    // flex:1,
-  },
+
   text: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 17,
-    letterSpacing: 1,
+    fontSize: '17@ms',
+    letterSpacing: '0.4@ms',
     // flex:1,
-  },
-  btn: {
-    position: 'absolute',
-    // top: 360,
-    // left: 135,
-    shadowColor: 'rgba(0,0,0, .4)',
-    shadowOffset: {height: 1, width: 1},
-    shadowOpacity: 1,
-    shadowRadius: 1,
-    elevation: 3,
-    borderRadius: 30,
-    // borderWidth: 3,
-    borderColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    // backgroundColor: "rgba(0, 0, 0, 0.1)",
-    height: 50,
-    width: 120,
-    // margin: 100,
-    // flex:1
-  },
-  image: {
-    position: 'absolute',
-    paddingRight: 5,
-    top: 0,
-    left: '75%',
-    height: 200,
-    // height: "30%",
-    width: 80,
-    // width: "20%",
-  },
-  input1: {
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    marginTop: 300,
-    width: '90%',
-    height: 30,
-    borderRadius: 20,
-  },
-  input2: {
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    marginTop: 20,
-    width: '90%',
-    height: 30,
-    borderRadius: 20,
-  },
-  loginView: {
-    backgroundColor: '#3758ff',
-    // backgroundColor: "rgba(255,140,97,1)",
-    marginTop: 20,
-    width: '90%',
-    height: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 20,
-  },
-  loginBtn: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 20,
-  },
-  ptext: {
-    margin: 0,
-    paddingLeft: 15,
-  },
-  logInText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  errorText: {
-    color: 'red',
   },
 });

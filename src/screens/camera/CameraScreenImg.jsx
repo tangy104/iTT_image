@@ -11,6 +11,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import {Switch} from 'react-native-switch';
+import {ScaledSheet, s, vs, ms} from 'react-native-size-matters';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useSelector, useDispatch} from 'react-redux';
 import {setTinGlobal} from '../../state/tinslice';
@@ -19,6 +20,7 @@ import {active, inactive} from '../../state/alertSlice';
 // import {ApiVideoLiveStreamView} from '@api.video/react-native-livestream';
 // import {Camera, CameraType} from 'expo-camera';
 import {CameraView, useCameraPermissions} from 'expo-camera';
+import * as ImageManipulator from 'expo-image-manipulator';
 import {
   GestureHandlerRootView,
   PinchGestureHandler,
@@ -35,6 +37,7 @@ import dash from '../../utils/images/dash.png';
 import logoKGP2 from '../../utils/images/logoKGP2.png';
 import logout from '../../utils/images/logout.png';
 import doc from '../../utils/images/doc.png';
+import flashIcon from '../../utils/images/flash.png';
 
 const CameraScreen = ({navigation, route}) => {
   const {height, width} = useWindowDimensions();
@@ -57,6 +60,7 @@ const CameraScreen = ({navigation, route}) => {
   const [image, setImage] = useState(null);
   const [zoom, setZoom] = useState(0);
   const [torch, setTorch] = useState(false);
+  const [flash, setFlash] = useState(true);
   // const [loading, setLoading] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState(null);
   const cameraRef = useRef(null);
@@ -209,12 +213,21 @@ const CameraScreen = ({navigation, route}) => {
       try {
         const data = await cameraRef.current.takePictureAsync();
         console.log(data);
-        setImage(data.uri);
+        // setImage(data.uri);
         console.log(typeof image);
+
+        // Compress the image before uploading
+        const compressedImage = await ImageManipulator.manipulateAsync(
+          data.uri,
+          [{resize: {width: 800}}], // Resize the image to a width of 800px
+          {compress: 1, format: ImageManipulator.SaveFormat.JPEG}, // Compress and convert to JPEG format
+        );
+        setImage(compressedImage.uri);
 
         const formData = new FormData();
         formData.append('file', {
-          uri: data.uri,
+          // uri: data.uri,
+          uri: compressedImage.uri,
           type: 'image/jpeg',
           name: 'image.jpg',
         });
@@ -227,6 +240,9 @@ const CameraScreen = ({navigation, route}) => {
         formData.append('forced_entry', true);
 
         console.log('formdata is', formData);
+        // Record the timestamp when starting the Axios request
+        const startRequestTime = new Date().getTime();
+        console.log('startRequestTime:', startRequestTime);
 
         const res = await axios.put(`${creden.URI}/car_wimg/tin`, formData, {
           headers: {
@@ -234,8 +250,73 @@ const CameraScreen = ({navigation, route}) => {
           },
         });
 
+        // Record the timestamp when receiving the response
+        const endRequestTime = new Date().getTime();
+        console.log('endRequestTime:', endRequestTime);
+
         const response = res.data;
         console.log('response from output', response);
+
+        // Extract the times from the server response
+        const {t2, timer_final: timerFinal, timer_start: timerStart} = response;
+        // console.log('timer start', new Date(timerStart).getTime());
+        // console.log('timer final', new Date(timerFinal).getTime());
+
+        // Calculate the time taken for the image to reach the server
+        const timeToReachServer =
+          new Date(timerStart).getTime() - startRequestTime;
+
+        // Calculate the time taken for the response to reach the mobile device
+        const responseTime = endRequestTime - new Date(timerFinal).getTime();
+
+        // console.log(
+        //   `Time taken for the image to reach the server: ${
+        //     timeToReachServer / 10000
+        //   } s`,
+        // );
+        // console.log(
+        //   `Time taken for the response to reach the mobile device: ${
+        //     responseTime / 1000
+        //   } s`,
+        // );
+
+        // Convert t2 from "HH:MM:SS.microseconds" to seconds
+        const t2Parts = t2.split(':');
+        const t2InSeconds =
+          parseInt(t2Parts[0], 10) * 3600 + // hours to seconds
+          parseInt(t2Parts[1], 10) * 60 + // minutes to seconds
+          parseFloat(t2Parts[2]); // seconds and microseconds
+
+        // console.log(`Time taken in the server: ${t2InSeconds}`);
+        // console.log(
+        //   'total time taken',
+        //   (endRequestTime - startRequestTime) / 1000,
+        // );
+        // console.log(
+        //   'time taken in communication:',
+        //   (endRequestTime - startRequestTime) / 1000 - t2InSeconds,
+        // );
+        // console.log(
+        //   'time taken to reach mobile device:',
+        //   (endRequestTime - startRequestTime) / 1000 -
+        //     t2InSeconds -
+        //     timeToReachServer / 10000,
+        // );
+        const t1 = (new Date(timerStart).getTime() - startRequestTime) / 10000;
+        const t3 =
+          (endRequestTime - startRequestTime) / 1000 - t1 - t2InSeconds;
+        console.log('t1:', t1);
+        console.log('t2:', t2InSeconds);
+        console.log('t3:', t3);
+        console.log('server time:', t2InSeconds);
+        console.log(
+          'communication time:',
+          (endRequestTime - startRequestTime) / 1000 - t2InSeconds,
+        );
+        console.log(
+          'Total time taken:',
+          (endRequestTime - startRequestTime) / 1000,
+        );
 
         setHeaders(response);
       } catch (error) {
@@ -244,6 +325,7 @@ const CameraScreen = ({navigation, route}) => {
           console.log('Error response data:', error.response.data);
           console.log('Error response status:', error.response.status);
           console.log('Error response headers:', error.response.headers);
+          setHeaders(error.response.data.detail);
           if (error.response.status === 404) {
             setHeaders(error.response.data.detail);
           }
@@ -335,6 +417,7 @@ const CameraScreen = ({navigation, route}) => {
   useEffect(() => {
     setTimeout(() => {
       setTorch(true);
+      console.log('torch on');
     }, 1000);
   }, [torch]);
 
@@ -347,12 +430,12 @@ const CameraScreen = ({navigation, route}) => {
           backgroundColor: !enableManualInput ? '#fff' : 'black',
         }}>
         <TopTabs
-          left={doc}
+          // left={doc}
           center={logoApp}
           // right={question}
           // right={ham}
           // tabRightFunc={() => navigation.navigate('Profile')}
-          tabLeftFunc={() => navigation.navigate('AboutApp')}
+          // tabLeftFunc={() => navigation.navigate('AboutApp')}
         />
         <View
           style={{
@@ -363,15 +446,70 @@ const CameraScreen = ({navigation, route}) => {
           }}>
           <Switch
             value={enableManualInput}
-            onValueChange={() => setEnableManualInput(!enableManualInput)}
-            activeText="Scan"
-            inActiveText="Manual"
-            circleSize={30}
-            switchRightPx={5}
+            onValueChange={() => {
+              setEnableManualInput(!enableManualInput);
+              setTimeout(() => {
+                setTorch(false);
+                console.log('torch off');
+              }, 500);
+            }}
+            activeText="Enabled"
+            inActiveText="Disabled"
+            circleSize={32}
+            switchRightPx={9}
+            switchLeftPx={9}
             // backgroundActive="#03c04a"
             backgroundActive="darkgreen"
             // backgroundInactive=''
             switchWidthMultiplier={3}
+            renderInsideCircle={() => (
+              <Text
+                style={{
+                  color: 'black',
+                  fontSize: ms(9),
+                  fontWeight: 'bold',
+                }}>
+                Scan
+              </Text>
+            )}
+          />
+        </View>
+        <View
+          style={{
+            position: 'absolute',
+            zIndex: 1,
+            top: height * 0.04,
+            left: width * 0.06,
+          }}>
+          <Switch
+            value={flash}
+            onValueChange={() => setFlash(!flash)}
+            activeText="On"
+            inActiveText="Off"
+            circleSize={30}
+            switchRightPx={2}
+            // backgroundActive="#03c04a"
+            backgroundActive="darkgreen"
+            // backgroundInactive=''
+            switchWidthMultiplier={2.7}
+            renderInsideCircle={() => (
+              // <Text
+              //   style={{
+              //     color: 'black',
+              //     fontSize: ms(6),
+              //     fontWeight: 'bold',
+              //   }}>
+              //   Flash
+              // </Text>
+              <Image
+                source={flashIcon}
+                style={{
+                  resizeMode: 'contain',
+                  height: vs(16),
+                  width: s(16),
+                }}
+              />
+            )}
           />
         </View>
         {!enableManualInput ? (
@@ -386,21 +524,21 @@ const CameraScreen = ({navigation, route}) => {
             <View
               style={{
                 backgroundColor: 'white',
-                padding: 20,
-                borderRadius: 10,
+                padding: s(20),
+                borderRadius: ms(10),
                 elevation: 5,
                 justifyContent: 'center',
                 alignItems: 'center',
                 width: '80%',
 
-                minHeight: 260,
+                minHeight: vs(260),
                 height: '35%',
               }}>
               <Text
                 style={{
-                  fontSize: 18,
+                  fontSize: ms(18),
                   fontWeight: 'bold',
-                  marginBottom: 10,
+                  marginBottom: vs(10),
                   color: 'black',
                 }}>
                 Enter TIN
@@ -408,21 +546,16 @@ const CameraScreen = ({navigation, route}) => {
 
               <View
                 style={{
-                  margin: 20,
-                  marginBottom: 5,
+                  margin: ms(20), // Moderated scaling for both vertical and horizontal margins
+                  marginBottom: vs(5), // Vertical scaling for bottom margin
                   flexDirection: 'row',
                   justifyContent: 'space-evenly',
-                  width: 220,
-                  height: 40,
-                  // top: 160,
-                  borderRadius: 12,
-                  borderWidth: 1.5,
-                  // borderColor: '#3758ff',
+                  width: s(220), // Horizontal scaling for width
+                  height: vs(40), // Vertical scaling for height
+                  borderRadius: ms(12), // Moderated scaling for border radius
+                  borderWidth: ms(1.5), // Moderated scaling for border width
                   borderColor: '#0f113e',
-                  //   justifyContent: "center",
                   alignItems: 'center',
-                  //   zIndex: 2,
-                  //   backgroundColor: "red",
                 }}
                 // onPress={() => navigation.navigate("Vmodel")}
               >
@@ -434,7 +567,7 @@ const CameraScreen = ({navigation, route}) => {
                   <TextInput
                     placeholder="TIN no."
                     placeholderTextColor="grey"
-                    style={{height: 40, width: 180, color: 'black'}}
+                    style={{height: vs(40), width: s(180), color: 'black'}}
                     value={manualTIN}
                     onChangeText={text => setManualTIN(text)}
                   />
@@ -443,25 +576,22 @@ const CameraScreen = ({navigation, route}) => {
 
               <TouchableOpacity
                 style={{
-                  width: 190,
-                  height: 40,
-                  marginTop: 20,
-                  borderRadius: 12,
-                  // borderWidth: 3,
-                  // borderColor: "#3758ff",
+                  width: s(190), // Horizontal scaling for width
+                  height: vs(35), // Vertical scaling for height
+                  marginTop: vs(20), // Vertical scaling for top margin
+                  borderRadius: ms(12), // Moderated scaling for border radius
                   justifyContent: 'center',
                   alignItems: 'center',
                   zIndex: 2,
-                  // backgroundColor: '#3758ff',
-                  backgroundColor: 'darkgreen',
+                  backgroundColor: 'darkgreen', // Keep the color as is
                 }}
                 onPress={putData}>
                 <Text
                   style={{
                     color: '#fff',
                     fontWeight: 'bold',
-                    fontSize: 17,
-                    letterSpacing: 1,
+                    fontSize: ms(17),
+                    letterSpacing: ms(1),
                   }}>
                   Submit
                 </Text>
@@ -492,7 +622,7 @@ const CameraScreen = ({navigation, route}) => {
                 style={{
                   // width: '100%',
                   height: '100%',
-                  marginBottom: 20,
+                  marginBottom: vs(20),
                   resizeMode: 'cover',
                 }}
                 onLoadStart={() => setImgLoading(true)}
@@ -507,26 +637,30 @@ const CameraScreen = ({navigation, route}) => {
                   alignSelf: 'center',
                   position: 'absolute',
                   backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                  padding: 15,
-                  borderRadius: 10,
+                  padding: s(15),
+                  borderRadius: ms(10),
                   elevation: 5,
                   justifyContent: 'center',
                   alignItems: 'center',
-                  width: '65%',
-                  minHeight: 50,
+                  width: '70%',
+                  minHeight: vs(50),
                   height: '20%',
                 }}>
-                {headers === 'No serial number detected' ? (
+                {headers === 'No serial number detected' ||
+                headers ===
+                  'No character detected while feeding to character detection model' ||
+                headers === 'No serial number could be detected finally' ? (
                   <>
                     <Text
                       style={{
-                        fontSize: 16,
+                        fontSize: ms(15),
                         fontWeight: 'bold',
-                        marginBottom: 10,
+                        marginBottom: vs(10),
                         color: 'black',
                         textAlign: 'center',
                       }}>
                       No TIN detected
+                      {/* {headers} */}
                     </Text>
                     <Text
                       style={{
@@ -544,10 +678,10 @@ const CameraScreen = ({navigation, route}) => {
                       }}>
                       <TouchableOpacity
                         style={{
-                          width: 100,
-                          height: 40,
+                          width: s(100),
+                          height: vs(40),
                           // top: 160,
-                          borderRadius: 12,
+                          borderRadius: ms(12),
                           // borderWidth: 3,
                           // borderColor: "#3758ff",
                           justifyContent: 'center',
@@ -556,19 +690,23 @@ const CameraScreen = ({navigation, route}) => {
                           // backgroundColor: '#3758ff',
                           // backgroundColor: '#03c04a',
                           backgroundColor: 'red',
-                          marginTop: 5,
+                          marginTop: vs(5),
                         }}
                         onPress={() => {
                           // dispatch(setTinGlobal(headers['output']));
                           setGotResponse(false);
                           setImage(null);
                           setHeaders(null);
+                          setTimeout(() => {
+                            setTorch(false);
+                            console.log('torch off');
+                          }, 500);
                         }}>
                         <Text
                           style={{
                             color: '#fff',
                             fontWeight: 'bold',
-                            fontSize: 17,
+                            fontSize: ms(17),
                             letterSpacing: 1,
                           }}>
                           Rescan
@@ -576,10 +714,10 @@ const CameraScreen = ({navigation, route}) => {
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={{
-                          width: 100,
-                          height: 40,
+                          width: s(100),
+                          height: vs(40),
                           // top: 160,
-                          borderRadius: 12,
+                          borderRadius: ms(12),
                           // borderWidth: 3,
                           // borderColor: "#3758ff",
                           justifyContent: 'center',
@@ -588,7 +726,7 @@ const CameraScreen = ({navigation, route}) => {
                           // backgroundColor: '#3758ff',
                           // backgroundColor: '#03c04a',
                           backgroundColor: 'darkgreen',
-                          marginTop: 5,
+                          marginTop: vs(5),
                         }}
                         onPress={() => {
                           setEnableManualInput(!enableManualInput);
@@ -600,8 +738,8 @@ const CameraScreen = ({navigation, route}) => {
                           style={{
                             color: '#fff',
                             fontWeight: 'bold',
-                            fontSize: 17,
-                            letterSpacing: 1,
+                            fontSize: ms(17),
+                            letterSpacing: ms(1),
                           }}>
                           Manual
                         </Text>
@@ -612,7 +750,7 @@ const CameraScreen = ({navigation, route}) => {
                   <>
                     <Text
                       style={{
-                        fontSize: 16,
+                        fontSize: ms(16),
                         fontWeight: 'bold',
                         // marginBottom: 10,
                         color: 'black',
@@ -621,14 +759,14 @@ const CameraScreen = ({navigation, route}) => {
                     </Text>
                     <View
                       style={{
-                        margin: 2,
+                        margin: s(2),
                         // marginTop: 15,
                         flexDirection: 'column',
                         justifyContent: 'space-evenly',
-                        width: 220,
+                        width: s(220),
                         // height: 40,
                         // top: 160,
-                        borderRadius: 12,
+                        borderRadius: ms(12),
                         borderWidth: 1.5,
                         // borderColor: '#3758ff',
                         // borderColor: '#990000',
@@ -654,10 +792,10 @@ const CameraScreen = ({navigation, route}) => {
                       }}>
                       <TouchableOpacity
                         style={{
-                          width: 100,
-                          height: 40,
+                          width: s(100),
+                          height: vs(40),
                           // top: 160,
-                          borderRadius: 12,
+                          borderRadius: ms(12),
                           // borderWidth: 3,
                           // borderColor: "#3758ff",
                           justifyContent: 'center',
@@ -666,7 +804,7 @@ const CameraScreen = ({navigation, route}) => {
                           // backgroundColor: '#3758ff',
                           // backgroundColor: '#03c04a',
                           backgroundColor: 'red',
-                          marginTop: 5,
+                          marginTop: vs(5),
                         }}
                         onPress={() => {
                           // dispatch(setTinGlobal(headers['output']));
@@ -674,24 +812,25 @@ const CameraScreen = ({navigation, route}) => {
                           setImage(null);
                           setTimeout(() => {
                             setTorch(false);
+                            console.log('torch off');
                           }, 500);
                         }}>
                         <Text
                           style={{
                             color: '#fff',
                             fontWeight: 'bold',
-                            fontSize: 17,
-                            letterSpacing: 1,
+                            fontSize: ms(17),
+                            letterSpacing: ms(1),
                           }}>
                           Rescan
                         </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={{
-                          width: 100,
-                          height: 40,
+                          width: s(100),
+                          height: vs(40),
                           // top: 160,
-                          borderRadius: 12,
+                          borderRadius: ms(12),
                           // borderWidth: 3,
                           // borderColor: "#3758ff",
                           justifyContent: 'center',
@@ -700,7 +839,7 @@ const CameraScreen = ({navigation, route}) => {
                           // backgroundColor: '#3758ff',
                           // backgroundColor: '#03c04a',
                           backgroundColor: 'darkgreen',
-                          marginTop: 5,
+                          marginTop: vs(5),
                         }}
                         onPress={() => {
                           dispatch(setTinGlobal(headers['output']));
@@ -716,8 +855,8 @@ const CameraScreen = ({navigation, route}) => {
                           style={{
                             color: '#fff',
                             fontWeight: 'bold',
-                            fontSize: 17,
-                            letterSpacing: 1,
+                            fontSize: ms(17),
+                            letterSpacing: ms(1),
                           }}>
                           Proceed
                         </Text>
@@ -749,17 +888,17 @@ const CameraScreen = ({navigation, route}) => {
                 // type={type}
                 facing={'back'}
                 ref={cameraRef}
-                // flashMode={flash}>
+                // flashMode={flash}
                 flash={'off'}
                 animateShutter={false}
-                enableTorch={false}
+                enableTorch={flash ? torch : false}
                 zoom={zoom}>
-                <View style={{position: 'relative', top: '85%'}}>
+                <View style={{position: 'relative', top: '78%'}}>
                   <TouchableOpacity
                     style={{
-                      width: 220,
-                      height: 40,
-                      borderRadius: 12,
+                      width: s(220),
+                      height: vs(40),
+                      borderRadius: ms(12),
                       // backgroundColor: '#3758ff',
                       // backgroundColor: '#03c04a',
                       backgroundColor: 'darkgreen',
@@ -783,7 +922,11 @@ const CameraScreen = ({navigation, route}) => {
                       directUpload();
                     }}>
                     <Text
-                      style={{color: '#fff', fontSize: 17, fontWeight: 'bold'}}>
+                      style={{
+                        color: '#fff',
+                        fontSize: ms(17),
+                        fontWeight: 'bold',
+                      }}>
                       {streaming ? 'Capturing' : 'Capture'}
                     </Text>
                   </TouchableOpacity>

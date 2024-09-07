@@ -18,7 +18,6 @@ import Login from '../src/screens/login/Login';
 import ScanVIN from '../src/screens/scanVIN/ScanVIN';
 import VinCamera from '../src/screens/camera/VinCamera';
 import NewSmodel from '../src/screens/smodel/NewSModel';
-// import CameraScreen from '../src/screens/camera/CameraScreen';
 import CameraScreenImg from '../src/screens/camera/CameraScreenImg';
 import AboutApp from '../src/screens/about/AboutApp';
 import AboutCoEAMT from '../src/screens/about/AboutCoEAMT';
@@ -53,7 +52,6 @@ const StackNav = () => {
       initialRouteName="StackHome"
       screenOptions={{headerShown: false}}>
       <Stack.Screen name="StackHome" component={StackHome} />
-      {/* <Stack.Screen name="Login" component={Login} /> */}
       <Stack.Screen name="ScanVIN" component={ScanVIN} />
       <Stack.Screen name="VinCamera" component={VinCamera} />
       <Stack.Screen name="NewSmodel" component={NewSmodel} />
@@ -92,11 +90,16 @@ const MainHome = () => {
 
   // useEffect(() => {
   //   dispatch(connectWebSocket());
+  //   handleStartCapture();
 
   //   return () => {
   //     dispatch(stopScreenCapture());
   //   };
   // }, [dispatch]);
+
+  //ce52f8bf60f2db5f
+  //3f879629b94e3dc0
+  //04dfb65d0da8d600
 
   const handleStartCapture = () => {
     if (deviceId === 'f80b60565be51cba') {
@@ -113,8 +116,7 @@ const MainHome = () => {
   const checkLogin = async () => {
     const data = await AsyncStorage.getItem('isLoggedIn');
     console.log('at main home', data);
-    // setIsLoggedIn(data === 'true');
-    setIsLoggedIn(data);
+    setIsLoggedIn(data === 'true');
   };
 
   useEffect(() => {
@@ -128,33 +130,6 @@ const MainHome = () => {
       }}>
       {isLoggedIn ? <StackNav /> : <LoginNav />}
 
-      {/* <RootStack.Navigator>
-        {isLoggedIn ? (
-          <RootStack.Screen name="StackNav" component={StackNav} />
-        ) : (
-          <RootStack.Screen name="LoginNav" component={LoginNav} />
-        )}
-      </RootStack.Navigator> */}
-
-      {/* <Stack.Navigator
-        initialRouteName="Home"
-        screenOptions={{headerShown: false}}>
-        <Stack.Screen name="Home" component={Home} />
-        <Stack.Screen name="Login" component={Login} />
-        <Stack.Screen name="ScanVIN" component={ScanVIN} />
-        <Stack.Screen name="VinCamera" component={VinCamera} />
-        <Stack.Screen name="NewSmodel" component={NewSmodel} />
-        <Stack.Screen name="CameraScreen" component={CameraScreen} />
-        <Stack.Screen name="AboutApp" component={AboutApp} />
-        <Stack.Screen name="AboutCoEAMT" component={AboutCoEAMT} />
-        <Stack.Screen name="Profile" component={Profile} />
-        <Stack.Screen name="AdminScreen" component={AdminScreen} />
-        <Stack.Screen name="Amodel" component={Amodel} />
-        <Stack.Screen name="Dashboard" component={Dashboard} />
-        <Stack.Screen name="CameraScreenNew1" component={CameraScreenNew1} />
-        <Stack.Screen name="CameraScreen2" component={CameraScreen2} />
-        <Stack.Screen name="ScreenSharing" component={ScreenSharing} />
-      </Stack.Navigator> */}
       {/* <View
         style={{
           height: 50,

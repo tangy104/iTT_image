@@ -1,5 +1,13 @@
-import {StyleSheet, Text, View, TouchableOpacity, Image} from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+} from 'react-native';
 import {React, useState, useEffect} from 'react';
+import {ScaledSheet, s, vs, ms} from 'react-native-size-matters';
 // import {useRoute} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
 import {setSelectedWheelDataGlobal} from '../../state/selectSlice';
@@ -634,15 +642,15 @@ const Chasis = props => {
         style={{
           flexDirection: 'row',
           justifyContent: 'space-between',
-          width: 364,
-          height: 150,
+          width: s(324),
+          height: vs(128),
           // backgroundColor: 'red',
         }}>
         <Text
           style={{
             color: 'black',
             transform: [{rotate: '-90deg'}],
-            left: 110,
+            left: s(100),
             fontWeight: 'bold',
           }}>
           FRONT
@@ -652,20 +660,20 @@ const Chasis = props => {
           style={{
             resizeMode: 'contain',
             transform: [{rotate: '-90deg'}],
-            bottom: 15,
+            bottom: vs(8),
             // width: 300,
-            left: 30,
-            height: 180,
+            left: s(26),
+            height: vs(145),
           }}
         />
         <Text
           style={{
             color: 'black',
             transform: [{rotate: '-90deg'}],
-            left: 80,
+            left: s(70),
             fontWeight: 'bold',
           }}>
-          BACK
+          REAR
         </Text>
         {carWithWheelsS.axles_data.map(spareAxle => (
           <View
@@ -674,8 +682,8 @@ const Chasis = props => {
               flexDirection: 'column',
               justifyContent: 'space-evenly',
               alignItems: 'center',
-              height: 150,
-              width: 60,
+              height: vs(128),
+              width: s(50),
             }}>
             {spareAxle.wheels_data.map((wheel, index) => {
               const id = JSON.stringify({
@@ -688,7 +696,7 @@ const Chasis = props => {
               const otherSelected = otherSelections[id] || false;
               return (
                 <View>
-                  {otherSelected ? (
+                  {creden.zone === 'Front' ? (
                     <TouchableOpacity
                       // key={wheel.wheel_id}
                       key={wheel.tin}
@@ -707,16 +715,74 @@ const Chasis = props => {
                             selectedButtonSpare === index &&
                             selectedWheelDataGlobal.axle_location ===
                               spareAxle.axle_location
-                              ? 40
-                              : 35,
+                              ? vs(35)
+                              : vs(32),
                         },
                         {
                           width:
                             selectedButtonSpare === index &&
                             selectedWheelDataGlobal.axle_location ===
                               spareAxle.axle_location
-                              ? 60
-                              : 55,
+                              ? s(55)
+                              : s(52),
+                        },
+                      ]}
+                      onPress={() => {
+                        dispatch(setTinGlobal(wheel.tin));
+                        // dispatch(
+                        //   setSelectedWheelDataGlobal({
+                        //     axle_location: null,
+                        //     wheel_pos: null,
+                        //     wheel_id: null,
+                        //     wheel_tin: null,
+                        //   }),
+                        // );
+                        // if (selectedId !== null) {
+                        //   sendMessage(selectedId, false);
+                        // }
+                      }}>
+                      <View
+                        style={{
+                          ...StyleSheet.absoluteFillObject,
+                          backgroundColor: 'rgba(255, 255, 255, 0.5)', // Semi-transparent white
+                          borderRadius: 2, // Same as the button's border radius
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          height: '100%',
+                          width: '100%',
+                        }}>
+                        <Text style={styles.text}>S{wheel.wheel_id}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  ) : otherSelected ? (
+                    <TouchableOpacity
+                      // key={wheel.wheel_id}
+                      key={wheel.tin}
+                      style={[
+                        styles.spare,
+                        {
+                          backgroundColor:
+                            wheel.tin != '' && wheel.tin != null
+                              ? '#4CAF50'
+                              : isSelected
+                              ? '#ffbf00'
+                              : '#ff2800',
+                        },
+                        {
+                          height:
+                            selectedButtonSpare === index &&
+                            selectedWheelDataGlobal.axle_location ===
+                              spareAxle.axle_location
+                              ? vs(35)
+                              : vs(32),
+                        },
+                        {
+                          width:
+                            selectedButtonSpare === index &&
+                            selectedWheelDataGlobal.axle_location ===
+                              spareAxle.axle_location
+                              ? s(55)
+                              : s(52),
                         },
                       ]}
                       onPress={() => {
@@ -754,22 +820,22 @@ const Chasis = props => {
                         {
                           height:
                             wheel.tin != '' && wheel.tin != null
-                              ? 35
+                              ? vs(32)
                               : selectedButtonSpare === index &&
                                 selectedWheelDataGlobal.axle_location ===
                                   spareAxle.axle_location
-                              ? 40
-                              : 35,
+                              ? vs(35)
+                              : vs(32),
                         },
                         {
                           width:
                             wheel.tin != '' && wheel.tin != null
-                              ? 55
+                              ? s(52)
                               : selectedButtonSpare === index &&
                                 selectedWheelDataGlobal.axle_location ===
                                   spareAxle.axle_location
-                              ? 60
-                              : 55,
+                              ? s(55)
+                              : s(52),
                         },
                       ]}
                       onPress={() => {
@@ -807,16 +873,16 @@ const Chasis = props => {
                             selectedButtonSpare === index &&
                             selectedWheelDataGlobal.axle_location ===
                               spareAxle.axle_location
-                              ? 40
-                              : 35,
+                              ? vs(35)
+                              : vs(32),
                         },
                         {
                           width:
                             selectedButtonSpare === index &&
                             selectedWheelDataGlobal.axle_location ===
                               spareAxle.axle_location
-                              ? 60
-                              : 55,
+                              ? s(55)
+                              : s(52),
                         },
                       ]}
                       onPress={() => {
@@ -923,23 +989,25 @@ const Chasis = props => {
         setSelectedWheelDataKey={handleSetSelectedWheelDataKey}
       />
     </View>
+    // </ScrollView>
   );
 };
 
 export default Chasis;
 
-const styles = StyleSheet.create({
+const styles = ScaledSheet.create({
   container: {
-    margin: 45,
-    marginTop: 80,
+    // margin: '45@ms',
+    // marginTop: '50@vs',
+    // marginBottom: '50@vs',
     transform: [{rotate: '90deg'}],
     // backgroundColor: "red",
   },
   rectangle: {
-    width: 300,
-    height: 120,
+    width: '300@s',
+    height: '120@vs',
     backgroundColor: '#007acc',
-    // margin: 30,
+    // margin: '30@ms',
     justifyContent: 'center',
     alignItems: 'center',
     // flexDirection: "column",
@@ -950,16 +1018,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   spare: {
-    width: 30,
-    height: 50,
+    width: '30@s',
+    height: '50@vs',
     backgroundColor: 'red',
     justifyContent: 'center',
     alignItems: 'center',
-    // marginRight: 22,
-    // marginBottom: -50,
-    // margin: 5,
+    // marginRight: '22@ms',
+    // marginBottom: '-50@vs',
+    // margin: '5@ms',
     // transform: [{ rotate: "-90deg" }],
-    borderRadius: 2,
+    borderRadius: '2@ms',
   },
   text: {
     transform: [{rotate: '-90deg'}],

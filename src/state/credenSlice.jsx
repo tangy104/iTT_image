@@ -3,6 +3,7 @@ import {createSlice} from '@reduxjs/toolkit';
 const initialState = {
   creden: {
     ticket: null,
+    zone: null,
     URI: null,
     WS_URI: null,
     RTMP_URI: null,

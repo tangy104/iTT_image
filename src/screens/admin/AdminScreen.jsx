@@ -9,7 +9,6 @@ import {
   Image,
   ImageBackground,
   TextInput,
-  useWindowDimensions,
   Alert,
   FlatList,
   Modal,
@@ -38,14 +37,9 @@ import doc from '../../utils/images/doc.png';
 
 // import GoodVibes from "../../../assets/fonts/GreatVibes-Regular.ttf";
 import {URI} from '@env';
-
-// const windowWidth = useWindowDimensions().width;
+import {s, vs, ms, ScaledSheet} from 'react-native-size-matters';
 
 const Home = ({navigation, route}) => {
-  // if (!fontsLoaded) {
-  //   return <AppLoading />;
-  // }
-
   const dispatch = useDispatch();
   const globalToken = useSelector(state => state.token.tokenGlobal);
   const creden = useSelector(state => state.creden.creden);
@@ -97,23 +91,18 @@ const Home = ({navigation, route}) => {
     </View>
   );
 
-  //posting by axios
+  // Posting by axios
   const handleLogin = async values => {
     try {
-      // Check if email and password are provided
       if (!values.email || !values.password) {
-        // Show an alert if either email or password is missing
         alert('Please enter both email and password.');
         return;
       }
-      // Serialize the values object to plain JavaScript object
       const serializedValues = JSON.parse(JSON.stringify(values));
 
       const formData = new URLSearchParams();
       formData.append('grant_type', '');
-      // formData.append("username", values.email);
       formData.append('username', 'lemon');
-      // formData.append("password", values.password);
       formData.append('password', 'tangy');
       formData.append('scope', '');
       formData.append('client_id', '');
@@ -132,47 +121,21 @@ const Home = ({navigation, route}) => {
         },
       );
 
-      // Assuming the server responds with a token
       const token = response.data.access_token;
       dispatch(setTokenGlobal(token));
 
-      // Handle the token as needed (e.g., store it in a secure location)
       console.log('Login successful! token:', globalToken);
 
-      // Navigate to the next screen after successful login
       navigation.navigate('Vmodel');
     } catch (error) {
       console.error('Error during login:', error.message);
-      // Check if the error is due to invalid credentials (unauthorized)
       if (error.response && error.response.status === 401) {
         alert('Invalid username or password. Please try again.');
       } else {
-        // Handle other types of errors as needed
         alert('Invalid credentials. Please try again.');
       }
-      // Handle the error as needed (e.g., show an error message to the user)
     }
   };
-
-  // const handleLogin = (values) => {
-  //   try {
-
-  // // Check if email and password are provided
-  // if (!values.email || !values.password) {
-  //   // Show an alert if either email or password is missing
-  //   alert("Please enter both email and password.");
-  //   return;
-  // }
-  //     // Log the extracted login information to the console
-  //     console.log("Login Information:", values);
-
-  //     // Navigate to the next screen after successful login
-  //     navigation.navigate("Vmodel");
-  //   } catch (error) {
-  //     console.error("Error during login:", error.message);
-  //     // Handle the error as needed (e.g., show an error message to the user)
-  //   }
-  // };
 
   const handleLogout = async () => {
     Alert.alert(
@@ -191,7 +154,6 @@ const Home = ({navigation, route}) => {
                 `${creden.URI + '/logout'}?token=${globalToken}`,
               );
               console.log('Logout successful', response.data);
-              // navigation.navigate('Login');
               navigation.navigate('LoginNav', {screen: 'Login'});
             } catch (error) {
               console.error('Error logging out', error);
@@ -203,7 +165,6 @@ const Home = ({navigation, route}) => {
       {cancelable: false},
     );
   };
-
   const addTicket = async () => {
     if (!ticketNo) {
       Alert.alert('Please enter a ticket number');
@@ -222,7 +183,6 @@ const Home = ({navigation, route}) => {
         },
         {
           headers: {
-            // Accept: "application/json",
             'Content-Type': 'application/json',
           },
         },
@@ -230,11 +190,18 @@ const Home = ({navigation, route}) => {
 
       console.log('Response:', response.data);
       Alert.alert('Ticket added successfully');
+      setTicketNo('');
       setShowModal(false);
       fetchUsers();
     } catch (error) {
-      console.error('Error:', error);
-      // Handle error as needed
+      if (error.response && error.response.status === 400) {
+        Alert.alert('Error', 'Ticket number already exists');
+        setTicketNo('');
+      } else {
+        console.error('Error:', error);
+        Alert.alert('Network error', 'Please check your connection');
+        setTicketNo('');
+      }
     }
   };
 
@@ -250,76 +217,17 @@ const Home = ({navigation, route}) => {
       />
 
       <View style={styles.linearGradient}>
-        <Text
-          style={{
-            fontSize: 17,
-            color: '#7f7f7f',
-            textAlign: 'center',
-            margin: 10,
-          }}>
-          Manage the access of the users
-        </Text>
+        <Text style={styles.infoText}>Manage the access of the users</Text>
         <TouchableOpacity
-          style={{
-            width: 220,
-            height: 40,
-            // top: 10,
-            borderRadius: 12,
-            // borderWidth: 3,
-            // borderColor: "#3758ff",
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 2,
-            backgroundColor: '#3758ff',
-          }}
+          style={styles.addButton}
           onPress={() => setShowModal(true)}>
           <Text style={styles.text}>Add new Ticket</Text>
         </TouchableOpacity>
-        <Image
-          source={logoTyre}
-          style={{
-            resizeMode: 'contain',
-            // backgroundColor: "red",
-            height: 160,
-            // bottom: 60,
-            //   width: 80
-          }}></Image>
-        <View
-          style={{
-            width: 200,
-            height: 50,
-            // borderRadius: 30,
-            // borderWidth: 3,
-            // borderColor: "#31367b",
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 2,
-            backgroundColor: '#31367b',
-          }}>
-          <Text
-            style={{
-              color: '#fff',
-              fontSize: 17,
-              letterSpacing: 1.5,
-              textAlign: 'center',
-              //   justifyContent: "center",
-              //   alignItems: "center",
-            }}>
-            List of the current Tickets
-          </Text>
+        <Image source={logoTyre} style={styles.logoTyre} />
+        <View style={styles.listHeader}>
+          <Text style={styles.listHeaderText}>List of the current Tickets</Text>
         </View>
-        <View
-          style={{
-            // flex: 1,
-            marginTop: 20,
-            marginLeft: 10,
-            marginRight: 10,
-            borderRadius: 10,
-            padding: 10,
-            width: '95%',
-            height: '42%',
-            // backgroundColor: "red",
-          }}>
+        <View style={styles.container}>
           <View style={styles.headerRow}>
             <Text style={[styles.cell, styles.serialCell, styles.headerCell]}>
               SNo
@@ -341,82 +249,22 @@ const Home = ({navigation, route}) => {
         transparent={true}
         visible={showModal}
         onRequestClose={() => setShowModal(false)}>
-        <View
-          style={{
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          }}>
-          <View
-            style={{
-              backgroundColor: 'white',
-              padding: 20,
-              borderRadius: 10,
-              elevation: 5,
-              justifyContent: 'center',
-              alignItems: 'center',
-              width: '80%',
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Add Ticket</Text>
 
-              minHeight: 260,
-              height: '35%',
-            }}>
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: 'bold',
-                marginBottom: 10,
-                color: 'black',
-              }}>
-              Add Ticket
-            </Text>
-
-            <View
-              style={{
-                margin: 20,
-                marginBottom: 5,
-                flexDirection: 'row',
-                justifyContent: 'space-evenly',
-                width: 220,
-                height: 40,
-                // top: 160,
-                borderRadius: 12,
-                borderWidth: 1.5,
-                borderColor: '#3758ff',
-                //   justifyContent: "center",
-                alignItems: 'center',
-                //   zIndex: 2,
-                //   backgroundColor: "red",
-              }}
-              onPress={() => navigation.navigate('Vmodel')}>
-              <Image
-                source={id}
-                style={{resizeMode: 'contain', height: 30, width: 30}}></Image>
-              <View>
-                <TextInput
-                  placeholder="Ticket no."
-                  placeholderTextColor="grey"
-                  style={{height: 40, width: 180, color: 'black'}}
-                  value={ticketNo}
-                  onChangeText={text => setTicketNo(text)}
-                />
-              </View>
+            <View style={styles.modalInputContainer}>
+              <Image source={id} style={styles.modalImage} />
+              <TextInput
+                placeholder="Ticket no."
+                placeholderTextColor="grey"
+                style={styles.modalInput}
+                value={ticketNo}
+                onChangeText={text => setTicketNo(text)}
+              />
             </View>
 
-            <TouchableOpacity
-              style={{
-                width: 190,
-                height: 40,
-                top: 16,
-                borderRadius: 12,
-                // borderWidth: 3,
-                // borderColor: "#3758ff",
-                justifyContent: 'center',
-                alignItems: 'center',
-                zIndex: 2,
-                backgroundColor: '#3758ff',
-              }}
-              onPress={addTicket}>
+            <TouchableOpacity style={styles.submitButton} onPress={addTicket}>
               <Text style={styles.text}>Submit</Text>
             </TouchableOpacity>
           </View>
@@ -435,170 +283,163 @@ const Home = ({navigation, route}) => {
 
 export default Home;
 
-const styles = StyleSheet.create({
+const styles = ScaledSheet.create({
   safeContainer: {
     flex: 1,
-    // backgroundColor: "#ffc0c8",
-    // backgroundColor: "#ffe9ec",
   },
 
   linearGradient: {
     flex: 1,
     alignItems: 'center',
-    // justifyContent: "center",
-    // borderRadius: 5,
-    // height: 100,
-    // width: 350,
   },
   imageBackground: {
     flex: 1,
-    // backgroundColor:"red",
-    // resizeMode: "cover",
-    width: '100%',
-    height: '55%',
-    alignItems: 'center',
-    // justifyContent: "center",
-  },
-  text1: {
-    // position: "absolute",
-    top: 70,
-    color: '#d9d9d9',
-    fontSize: 20,
-    fontWeight: 'bold',
-    letterSpacing: 3,
-    // flex:1,
-  },
-  text2: {
-    // position: "absolute",
-    top: 60,
-    // left: 22,
-    color: '#fff',
-    fontSize: 20,
-    // fontWeight: "bold",
-    fontFamily: 'Allura_400Regular',
-    fontStyle: 'italic',
-    // flex:1,
-  },
-  text: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 17,
-    letterSpacing: 1,
-    // flex:1,
-  },
-  btn: {
-    position: 'absolute',
-    // top: 360,
-    // left: 135,
-    shadowColor: 'rgba(0,0,0, .4)',
-    shadowOffset: {height: 1, width: 1},
-    shadowOpacity: 1,
-    shadowRadius: 1,
-    elevation: 3,
-    borderRadius: 30,
-    // borderWidth: 3,
-    borderColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    // backgroundColor: "rgba(0, 0, 0, 0.1)",
-    height: 50,
-    width: 120,
-    // margin: 100,
-    // flex:1
-  },
-  image: {
-    position: 'absolute',
-    paddingRight: 5,
-    top: 0,
-    left: '75%',
-    height: 200,
-    // height: "30%",
-    width: 80,
-    // width: "20%",
-  },
-  input1: {
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    marginTop: 300,
-    width: '90%',
-    height: 30,
-    borderRadius: 20,
-  },
-  input2: {
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    marginTop: 20,
-    width: '90%',
-    height: 30,
-    borderRadius: 20,
-  },
-  loginView: {
-    backgroundColor: '#3758ff',
-    // backgroundColor: "rgba(255,140,97,1)",
-    marginTop: 20,
-    width: '90%',
-    height: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 20,
-  },
-  loginBtn: {
     width: '100%',
     height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 20,
-  },
-  ptext: {
-    margin: 0,
-    paddingLeft: 15,
-  },
-  logInText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  errorText: {
-    color: 'red',
   },
 
+  infoText: {
+    fontSize: ms(17),
+    color: '#7f7f7f',
+    textAlign: 'center',
+    margin: s(10),
+  },
+  addButton: {
+    width: s(200),
+    height: vs(35),
+    borderRadius: s(12),
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 2,
+    backgroundColor: '#3758ff',
+  },
+  logoTyre: {
+    resizeMode: 'contain',
+    height: vs(150),
+  },
+  listHeader: {
+    width: s(200),
+    height: vs(50),
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 2,
+    backgroundColor: '#31367b',
+  },
+  listHeaderText: {
+    color: '#fff',
+    fontSize: ms(17),
+    letterSpacing: ms(1.5),
+    textAlign: 'center',
+  },
   container: {
-    flex: 1,
-    marginTop: 20,
-    marginLeft: 10,
-    marginRight: 10,
+    marginTop: vs(15),
+    marginLeft: s(10),
+    marginRight: s(10),
+    borderRadius: s(10),
+    padding: s(10),
     width: '95%',
+    height: '44%',
+    // backgroundColor: 'red',
   },
   headerRow: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: '#000',
-    paddingBottom: 5,
-    marginBottom: 5,
-    backgroundColor: '#f1f8ff',
+    display: 'flex',
     justifyContent: 'center',
-    // alignItems: "center",
-    // height: 80,
-    // backgroundColor: "#656fff",
+    alignItems: 'center',
+    flexDirection: 'row',
+    backgroundColor: 'red',
+    // borderWidth: 1,
+    // borderColor: 'black',
+  },
+  cell: {
+    display: 'flex',
+    flex: 1,
+    // height: vs(30),
+    textAlign: 'center',
+    // justifyContent: 'center',
+    // alignItems: 'center',
+    padding: s(7),
+    //  backgroundColor: 'red',
+    color: 'black',
+    borderWidth: 1,
+  },
+  serialCell: {
+    flex: 0.5,
+    display: 'flex',
+    fontSize: ms(13),
+    // alignItems: 'center',
+    // justifyContent: 'center',
+  },
+  headerCell: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    fontWeight: 'bold',
+    backgroundColor: '#646fff',
+    borderWidth: 1,
+    height: '100%',
   },
   row: {
     flexDirection: 'row',
-    marginBottom: 5,
-    justifyContent: 'center',
-    // alignItems: "center",
-    // height: 50,
+    marginTop: s(4),
+    // borderBottomWidth: 1,
+    // borderBottomColor: '#eee',
   },
-  cell: {
-    flex: 2,
-    textAlign: 'center',
-    borderWidth: 1,
-    borderColor: '#000',
-    padding: 10,
-    textAlignVertical: 'center',
+
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    backgroundColor: 'white',
+    padding: s(20),
+    borderRadius: s(10),
+    elevation: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '80%',
+    minHeight: vs(260),
+    height: '35%',
+  },
+  modalTitle: {
+    fontSize: ms(18),
+    fontWeight: 'bold',
+    marginBottom: s(10),
     color: 'black',
   },
-  headerCell: {
-    fontWeight: 'bold',
-    backgroundColor: '#656fff',
+  modalInputContainer: {
+    margin: s(20),
+    marginBottom: s(10),
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+    width: '100%',
   },
-  serialCell: {
-    flex: 1, // Smaller flex for serial number column
+  modalImage: {
+    width: s(20),
+    height: vs(20),
+    marginRight: s(10),
+  },
+  modalInput: {
+    flex: 1,
+    height: vs(40),
+    fontSize: ms(16),
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    color: 'black',
+  },
+  submitButton: {
+    width: s(150),
+    height: vs(40),
+    borderRadius: s(12),
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#3758ff',
+  },
+  text: {
+    color: '#fff',
+    fontSize: ms(16),
   },
 });

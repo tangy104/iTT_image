@@ -28,13 +28,14 @@ import {setCreden} from '../../state/credenSlice';
 import axios from 'axios';
 import {URI, WS_URI} from '@env';
 
+import {ScaledSheet, s, vs, ms} from 'react-native-size-matters';
+
 import TopTabs from '../../navigation/TopTabs';
 import Tabs from '../../navigation/Tabs';
 
 import Chasis from '../../components/chasis/ChasisSmodel';
 import Details from '../../components/details/Details';
 
-import ham from '../../utils/images/ham.png';
 import logoApp from '../../utils/images/logoApp.png';
 // import question from "../../utils/images/question.png";
 import dash from '../../utils/images/dash.png';
@@ -480,6 +481,7 @@ const Smodel = ({navigation, route}) => {
               dispatch(
                 setCreden({
                   ticket: null,
+                  zone: null,
                   URI: creden.URI,
                   WS_URI: creden.WS_URI,
                   RTMP_URI: creden.RTMP_URI,
@@ -487,6 +489,7 @@ const Smodel = ({navigation, route}) => {
               );
               AsyncStorage.setItem('token', '');
               AsyncStorage.setItem('ticket', '');
+              AsyncStorage.setItem('zone', '');
               AsyncStorage.setItem('isLoggedIn', '');
               console.log('Logout successful', response.data);
               // navigation.navigate('Login');
@@ -604,7 +607,7 @@ const Smodel = ({navigation, route}) => {
             <Text
               style={{
                 color: 'black',
-                fontSize: 6,
+                fontSize: ms(6),
                 fontWeight: 'bold',
               }}>
               RESCAN
@@ -635,7 +638,7 @@ const Smodel = ({navigation, route}) => {
             <Text
               style={{
                 color: 'black',
-                fontSize: 6,
+                fontSize: ms(6),
                 fontWeight: 'bold',
               }}>
               MANUAL
@@ -645,24 +648,37 @@ const Smodel = ({navigation, route}) => {
       </View>
       <View style={styles.container1}>
         {/* <Text>Smodel {route.params.model.id}</Text> */}
+        <View style={{height:vs(320), top:vs(10), marginBottom:vs(10) }}>
+          <ScrollView
+            contentContainerStyle={{
+              flexGrow: 1,
+              // top: vs(40),
+              width: s(330), // Width of the inner content
+              height: vs(400), // Height of the inner content
+            }}
+            // style={{backgroundColor: 'pink'}}
+            // horizontal={true}
+          >
+            <Chasis
+              chasisRef={chasisRef}
+              // model={dummyData}
+              model={apiResponseData || route.params.model}
+              // model={apiResponseData}
+              enableRescan={enableRescan}
+              // elapsedTime={route.params.elapsedTime}
+              fromCameraScreen={route.params.fromCameraScreen ? true : false}
+              // id={route.params.id}
+              vin={route.params.vin}
+              fetchChassisData={fetchData}
+            />
+          </ScrollView>
+        </View>
 
-        <Chasis
-          chasisRef={chasisRef}
-          // model={dummyData}
-          model={apiResponseData || route.params.model}
-          // model={apiResponseData}
-          enableRescan={enableRescan}
-          // elapsedTime={route.params.elapsedTime}
-          fromCameraScreen={route.params.fromCameraScreen ? true : false}
-          // id={route.params.id}
-          vin={route.params.vin}
-          fetchChassisData={fetchData}
-        />
         <View
           style={{
             flexDirection: 'row',
             width: '85%',
-            top: -20,
+            // top: vs(-20),
             justifyContent: 'center',
             // backgroundColor: 'black',
           }}>
@@ -785,10 +801,10 @@ const Smodel = ({navigation, route}) => {
         )}
         <View
           style={{
-            width: 180,
-            height: 40,
+            width: s(170),
+            height: vs(35),
             // top: 160,
-            borderRadius: 30,
+            borderRadius: s(30),
             // borderWidth: 3,
             // borderColor: "#31367b",
             justifyContent: 'center',
@@ -801,9 +817,9 @@ const Smodel = ({navigation, route}) => {
         >
           <Text
             style={{
-              fontSize: 17,
+              fontSize: ms(17),
               color: '#d9d9d9',
-              letterSpacing: 1,
+              letterSpacing: ms(1),
               fontWeight: 'bold',
             }}>
             Step-2
@@ -811,20 +827,20 @@ const Smodel = ({navigation, route}) => {
         </View>
         <Text
           style={{
-            fontSize: 17,
+            fontSize: ms(17),
             color: '#7f7f7f',
             textAlign: 'center',
-            top: 5,
+            top: vs(2),
           }}>
           Select individual tyres and scan the TIN
         </Text>
         <TouchableOpacity
           style={{
-            width: 220,
-            height: 40,
-            top: 15,
+            width: s(190),
+            height: vs(35),
+            top: vs(5),
 
-            borderRadius: 12,
+            borderRadius: s(12),
             // borderWidth: 3,
             // borderColor: "#3758ff",
             justifyContent: 'center',
@@ -874,7 +890,7 @@ const Smodel = ({navigation, route}) => {
                         {
                           text: 'Proceed scanning again',
                           onPress: () => {
-                            const timeOut = setTimeout(() => {
+                            setTimeout(() => {
                               // Navigate to tyre scan screen
                               navigation.navigate('CameraScreen', {
                                 model: apiResponseData,
@@ -882,7 +898,7 @@ const Smodel = ({navigation, route}) => {
                                 vin: apiResponseData.vin,
                               });
                             }, 500);
-                            timeOut();
+                            // timeOut();
                             handleFailedAttempt();
                             handleButtonPress();
                           },
@@ -996,14 +1012,14 @@ const Smodel = ({navigation, route}) => {
         </TouchableOpacity>
         <View
           style={{
-            margin: 20,
-            marginBottom: 5,
-            top: 15,
+            margin: s(20),
+            marginBottom: vs(5),
+            top: vs(2),
             flexDirection: 'row',
             justifyContent: 'space-evenly',
             width: '90%',
-            height: 40,
-            borderRadius: 12,
+            height: vs(35),
+            borderRadius: s(12),
             borderWidth: 1.5,
             // borderColor: '#3758ff',
             borderColor: '#0f113e',
@@ -1015,21 +1031,22 @@ const Smodel = ({navigation, route}) => {
             source={logoTyre2}
             style={{
               resizeMode: 'contain',
-              height: 28,
-              width: 28,
-              right: 30,
+              height: vs(28),
+              width: s(26),
+              right: s(30),
             }}></Image>
           <View>
             <TextInput
               placeholder={globalTin ? globalTin : 'Scanned TIN no.'}
               placeholderTextColor="grey"
               style={{
-                height: 40,
-                width: 180,
-                right: 60,
-                fontSize: 15,
+                height: vs(40),
+                width: s(180),
+                right: s(60),
+                fontSize: ms(15),
                 color: 'black',
               }}
+              editable={false}
             />
           </View>
         </View>
@@ -1114,21 +1131,21 @@ const Smodel = ({navigation, route}) => {
           <View
             style={{
               backgroundColor: 'white',
-              padding: 20,
-              borderRadius: 10,
+              padding: s(20),
+              borderRadius: s(10),
               elevation: 5,
               justifyContent: 'center',
               alignItems: 'center',
               width: '80%',
 
-              minHeight: 260,
+              minHeight: vs(220),
               height: '35%',
             }}>
             <Text
               style={{
-                fontSize: 18,
+                fontSize: ms(18),
                 fontWeight: 'bold',
-                marginBottom: 10,
+                marginBottom: vs(8),
                 color: 'black',
               }}>
               Enter TIN
@@ -1136,14 +1153,14 @@ const Smodel = ({navigation, route}) => {
 
             <View
               style={{
-                margin: 20,
-                marginBottom: 5,
+                margin: s(20),
+                marginBottom: vs(5),
                 flexDirection: 'row',
                 justifyContent: 'space-evenly',
-                width: 220,
-                height: 40,
+                width: s(220),
+                height: vs(35),
                 // top: 160,
-                borderRadius: 12,
+                borderRadius: s(12),
                 borderWidth: 1.5,
                 // borderColor: '#3758ff',
                 borderColor: '#0f113e',
@@ -1162,7 +1179,7 @@ const Smodel = ({navigation, route}) => {
                 <TextInput
                   placeholder="TIN no."
                   placeholderTextColor="grey"
-                  style={{height: 40, width: 180, color: 'black'}}
+                  style={{height: vs(40), width: s(180), color: 'black'}}
                   value={manualTIN}
                   onChangeText={text => setManualTIN(text)}
                 />
@@ -1171,10 +1188,10 @@ const Smodel = ({navigation, route}) => {
 
             <TouchableOpacity
               style={{
-                width: 190,
-                height: 40,
-                marginTop: 25,
-                borderRadius: 12,
+                width: s(190),
+                height: vs(35),
+                marginTop: vs(25),
+                borderRadius: s(12),
                 // borderWidth: 3,
                 // borderColor: "#3758ff",
                 justifyContent: 'center',
@@ -1203,56 +1220,55 @@ const Smodel = ({navigation, route}) => {
 
 export default Smodel;
 
-const styles = StyleSheet.create({
+const styles = ScaledSheet.create({
   container1: {
     justifyContent: 'center',
     alignItems: 'center',
     flex: 1,
-    bottom: 60,
-
-    // marginBottom:0
-    // backgroundColor:"black"
+    bottom: '40@vs',
+    // marginBottom: 0
+    // backgroundColor: "black"
   },
   container2: {
-    height: 140,
-    width: 400,
+    height: '140@vs',
+    width: '400@s',
     marginTop: 0,
     marginBottom: 0,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    // backgroundColor:"black"
+    // backgroundColor: "black"
   },
   container3: {
-    height: 100,
-    width: 400,
+    height: '100@vs',
+    width: '400@s',
     marginTop: 0,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
   },
   btn: {
-    width: '34%',
-    height: '30%',
+    width: '34@s',
+    height: '30@vs',
     backgroundColor: '#7f6000',
-    margin: 30,
+    margin: '30@ms',
     justifyContent: 'center',
     alignItems: 'center',
   },
   btn2: {
-    width: '34%',
-    height: '20%',
+    width: '34@s',
+    height: '20@vs',
     backgroundColor: '#222a35',
-    margin: 30,
+    margin: '30@ms',
     justifyContent: 'center',
     alignItems: 'center',
   },
   btn3: {
-    width: '19%',
-    height: '20%',
+    width: '19@s',
+    height: '20@vs',
     backgroundColor: '#222a35',
-    marginRight: 10,
-    marginLeft: 10,
+    marginRight: '10@ms',
+    marginLeft: '10@ms',
     marginTop: 0,
     justifyContent: 'center',
     alignItems: 'center',
@@ -1262,37 +1278,36 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     backgroundColor: 'pink',
-    marginHorizontal: 20,
+    marginHorizontal: '20@ms',
   },
   textScroll: {
-    fontSize: 45,
+    fontSize: '45@ms',
     flex: 1,
   },
   containerScroll: {
     // flex: 1,
-    height: 260,
+    height: '260@vs',
     // paddingTop: StatusBar.currentHeight,
   },
   dropdown: {
     position: 'absolute',
-    top: 30,
-    right: 1,
+    top: '30@vs',
+    right: '1@s',
     backgroundColor: 'white',
-    borderRadius: 3,
-    padding: 10,
+    borderRadius: '3@ms',
+    padding: '10@ms',
     elevation: 3,
-    height: 100,
+    height: '100@vs',
   },
-
   button: {
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#4CAF50', // Green color for enabled button
-    paddingVertical: 5,
-    paddingHorizontal: 24,
-    borderRadius: 5,
+    paddingVertical: '5@vs',
+    paddingHorizontal: '24@s',
+    borderRadius: '5@ms',
     elevation: 3, // Elevation for Android shadow
-    top: 10,
+    top: '10@vs',
   },
   buttonEnabled: {
     backgroundColor: '#4CAF50', // Green color for enabled button
@@ -1301,7 +1316,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#9E9E9E', // Grey color for disabled button
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: '16@ms',
     color: '#FFFFFF', // White text color
   },
 });
