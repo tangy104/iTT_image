@@ -1,21 +1,13 @@
 import {StyleSheet, Text, View, TouchableOpacity, Image} from 'react-native';
 import {React, useState, useEffect} from 'react';
 import {ScaledSheet, s, vs, ms} from 'react-native-size-matters';
-// import {useRoute} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
 import {setSelectedWheelDataGlobal} from '../../state/selectSlice';
 import {setTinGlobal} from '../../state/tinslice';
-import {setCreden} from '../../state/credenSlice';
-
-// import chassis from '../../utils/images/chassis.jpg';
 import chassis2 from '../../utils/images/chassis2.png';
-
-// import STyre from './STyre';
 import SAxle from './SAxle';
-import {URI, WS_URI} from '@env';
 
 const Chasis = props => {
-  // const route = useRoute();
   const dispatch = useDispatch();
   console.log('Helllo');
 
@@ -23,16 +15,12 @@ const Chasis = props => {
     state => state.app.selectedWheelDataGlobal,
   );
   const creden = useSelector(state => state.creden.creden);
-
   //For parallel comm
   const [selectedId, setSelectedId] = useState(null); // State to hold the selected ID of the current device
   const [selections, setSelections] = useState({}); // State to hold the selections of all devices
   const [otherSelections, setOtherSelections] = useState({}); //State to hold the selections of all the other devices
   const [selectedWheelDataKey, setSelectedWheelDataKey] = useState({}); //State to hold the selections of all the other devices
   const [ws, setWs] = useState(null); // State to hold the WebSocket instance
-
-  // const [showMessage, setShowMessage] = useState(false); //Used to show the time taken message when it comes from camera screen
-
   const [selectedButtonFrontRight, setSelectedButtonFrontRight] =
     useState(null);
   const [selectedButtonRear1Right, setSelectedButtonRear1Right] =
@@ -41,7 +29,6 @@ const Chasis = props => {
   const [selectedButtonFrontLeft, setSelectedButtonFrontLeft] = useState(null);
   const [selectedButtonRear1Left, setSelectedButtonRear1Left] = useState(null);
   const [selectedButtonRear2Left, setSelectedButtonRear2Left] = useState(null);
-
   //New 12 states
   const [selectedButtonFFRight, setSelectedButtonFFRight] = useState(null);
   const [selectedButtonFRRight, setSelectedButtonFRRight] = useState(null);
@@ -257,41 +244,6 @@ const Chasis = props => {
     setSelectedButtonTARight(null);
     setSelectedButtonSpare(null);
   };
-
-  // const handleButtonPressFrontRight = (buttonIndex) => {
-  //   setSelectedButtonFrontRight(buttonIndex);
-  //   setSelectedButtonRear1Right(null); // Reset rear axle selection
-  //   setSelectedButtonSpare(null); // Reset rear axle selection
-  //   setSelectedButtonFrontLeft(null);
-  //   setSelectedButtonRear1Left(null);
-  //   setSelectedButtonRear2Left(null);
-  // };
-  // const handleButtonPressFrontLeft = (buttonIndex) => {
-  //   setSelectedButtonFrontLeft(buttonIndex);
-  //   setSelectedButtonRear1Right(null); // Reset rear axle selection
-  //   setSelectedButtonSpare(null); // Reset rear axle selection
-  //   setSelectedButtonFrontRight(null);
-  //   setSelectedButtonRear1Left(null);
-  //   setSelectedButtonRear2Left(null);
-  // };
-
-  // const handleButtonPressRear1Right = (buttonIndex) => {
-  //   setSelectedButtonRear1Right(buttonIndex);
-  //   setSelectedButtonFrontLeft(null); // Reset front axle selection
-  //   setSelectedButtonSpare(null); // Reset rear axle selection
-  //   setSelectedButtonFrontRight(null);
-  //   setSelectedButtonRear1Left(null);
-  //   setSelectedButtonRear2Left(null);
-  // };
-  // const handleButtonPressRear1Left = (buttonIndex) => {
-  //   setSelectedButtonRear1Right(null);
-  //   setSelectedButtonFrontLeft(null); // Reset front axle selection
-  //   setSelectedButtonSpare(null); // Reset rear axle selection
-  //   setSelectedButtonFrontRight(null);
-  //   setSelectedButtonRear1Left(buttonIndex);
-  //   setSelectedButtonRear2Left(null);
-  // };
-
   const handleButtonPressSpare = buttonIndex => {
     setSelectedButtonSpare(buttonIndex);
     setSelectedButtonRear1Right(null);
@@ -300,26 +252,11 @@ const Chasis = props => {
     setSelectedButtonRear1Left(null);
     setSelectedButtonRear2Left(null);
   };
-  // const handleButtonPressRear2Left = (buttonIndex) => {
-  //   setSelectedButtonSpare(null);
-  //   setSelectedButtonRear1Right(null);
-  //   setSelectedButtonFrontLeft(null);
-  //   setSelectedButtonFrontRight(null);
-  //   setSelectedButtonRear1Left(null);
-  //   setSelectedButtonRear2Left(buttonIndex);
-  // };
 
   const scanned = () => {
-    // console.log("this is", selectedButtonFrontRight);
-    // console.log("called me from parent");
-    // if (selectedButtonFrontRight !== null) {
-    //   console.log("it is correct");
-    // }
     if (selectedButtonFrontRight !== null) {
       console.log('before', indexRecordFrontRight);
       console.log('index', selectedButtonFrontRight);
-      // let copyIndex = [...indexRecordFrontRight];
-      // setIndexRecordFrontRight([...copyIndex, selectedButtonFrontRight]);
       setIndexRecordFrontRight(previous => [
         ...previous,
         selectedButtonFrontRight,
@@ -345,22 +282,6 @@ const Chasis = props => {
   };
 
   //For parallel comm
-
-  // Function to handle the incoming message by updating selections state
-  const handleIncomingMessage = (id, selected) => {
-    // Update the state of selections with the new id and selected value
-    setSelections(prev => ({...prev, [id]: selected}));
-
-    // Update other selections and reset the selected wheel data key if necessary
-    setOtherSelections(prev => {
-      if (selectedWheelDataKey) {
-        // Set previous selection to false and update the new selection
-        return {...prev, [selectedWheelDataKey]: false, [id]: selected};
-      }
-      return {...prev, [id]: selected};
-    });
-  };
-
   useEffect(() => {
     console.log(
       'chassis connection',
@@ -381,22 +302,48 @@ const Chasis = props => {
     };
     newWs.onmessage = e => {
       console.log('Message received from chassis:', e.data);
-
+      // Ensure that e.data is parsed as JSON if it's a JSON string
+      let parsedData;
       try {
-        // Parse the received message as JSON
-        const parsedData = JSON.parse(e.data);
-
-        // If an alert is received indicating the database was updated, call fetchChassisData
-        if (parsedData.alert === 'DB_UPDATED') {
-          props.fetchChassisData(); // Refresh chassis data
-        } else if (parsedData.message) {
-          // If the message field exists, parse it and extract id and selected
-          const {id, selected} = JSON.parse(parsedData.message);
-          handleIncomingMessage(id, selected); // Handle the message data
-        }
+        parsedData = JSON.parse(e.data);
+        console.log('parsed', parsedData);
       } catch (error) {
-        // Log an error if JSON parsing fails
-        console.error('Error parsing WebSocket message:', error);
+        console.error('Failed to parse e.data as JSON:', error);
+        return;
+      }
+      // Check if the parsed data contains an alert field
+      if (parsedData.alert === 'DB_UPDATED') {
+        props.fetchChassisData(); // Corrected function call
+        console.log('DB_UPDATED in Smodel');
+      } else {
+        try {
+          // Assuming outerMessage is already parsed into parsedData
+          const outerMessage = parsedData;
+
+          // Check if outerMessage.message is a valid JSON string
+          const innerMessage = JSON.parse(outerMessage.message);
+          const {id, selected} = innerMessage;
+
+          // Update the selections
+          setSelections(prevSelections => ({
+            ...prevSelections,
+            [id]: selected,
+          }));
+
+          // Update other selections with specific logic
+          setOtherSelections(prevSelections => {
+            const updatedSelections = {...prevSelections, [id]: selected};
+
+            // Set the key for the selected wheel to false if it exists
+            if (selectedWheelDataKey != null) {
+              updatedSelections[selectedWheelDataKey] = false;
+            }
+
+            return updatedSelections;
+          });
+        } catch (error) {
+          console.error('Failed to parse outerMessage.message:', error);
+        }
       }
     };
 
@@ -430,33 +377,9 @@ const Chasis = props => {
         // console.log('selectedWheelDataGlobal:', selectedWheelDataGlobal);
       } else {
         console.log(`Item ${id} is already selected by another device.`);
-        //make selection null
-        // dispatch(
-        //   setSelectedWheelDataGlobal({
-        //     axle_location: null,
-        //     wheel_pos: null,
-        //     wheel_id: null,
-        //     wheel_tin: null,
-        //   }),
-        // );
       }
     }
   };
-
-  // Function to show the time taken message
-  // const time = () => {
-  //   // Set the state to true after mounting and if it comes from camera screen
-  //   if (props.fromCameraScreen) {
-  //     setShowMessage(true);
-  //   }
-  //   // Set the state back to false after 8 seconds
-  //   const timeout = setTimeout(() => {
-  //     setShowMessage(false);
-  //   }, 8000);
-
-  //   // Cleanup the timeout to avoid memory leaks
-  //   return () => clearTimeout(timeout);
-  // };
 
   //New chasisRef
   props.chasisRef.current = {
@@ -507,10 +430,6 @@ const Chasis = props => {
   const carWithWheelsR = filterWheels(props.model, 'R');
   const carWithWheelsS = filterWheels(props.model, 'S');
 
-  // console.log("left position:", carWithWheelsL.axles_data);
-  // console.log("right position:", carWithWheelsR);
-  // console.log("spare position:", carWithWheelsS.axles_data);
-
   const handleButtonPressSpareGlobal = (buttonIndex, tin) => {
     const selectedWheel = carWithWheelsS.axles_data
       .map(frontAxle => {
@@ -535,9 +454,7 @@ const Chasis = props => {
     const key = JSON.stringify(newSelectedWheelDataKey); // Constructing unique key
     setSelectedWheelDataKey(key);
     handleSelection(key, newSelectedWheelData);
-    // setSelectedWheelData(newSelectedWheelData);
-    // Dispatch the action to set selectedWheelData in the Redux store
-    // dispatch(setSelectedWheelDataGlobal(newSelectedWheelData));
+
   };
 
   const handleSetSelectedWheelDataKey = key => {
@@ -546,23 +463,6 @@ const Chasis = props => {
 
   return (
     <View style={styles.container}>
-      {/* <STyre
-        model={carWithWheelsR}
-        selectedButtonFront={selectedButtonFrontRight}
-        selectedButtonRear1={selectedButtonRear1Right}
-        selectedButtonRear2={selectedButtonSpare}
-        indexRecordFront={indexRecordFrontRight}
-        indexRecordRear1={indexRecordRear1Right}
-        indexRecordRear2={indexRecordRear2Right}
-        onSelectButtonFront={handleButtonPressFrontRight}
-        onSelectButtonRear1={handleButtonPressRear1Right}
-        onSelectButtonRear2={handleButtonPressSpare}
-        showMessage={showMessage}
-        elapsedTime={props.elapsedTime}
-        side={"right"}
-        fromCameraScreen={props.fromCameraScreen}
-        enableRescan={props.enableRescan}
-      /> */}
       <SAxle
         model={carWithWheelsR}
         selectedButtonFF={selectedButtonFFRight}
@@ -675,17 +575,6 @@ const Chasis = props => {
                       ]}
                       onPress={() => {
                         dispatch(setTinGlobal(wheel.tin));
-                        // dispatch(
-                        //   setSelectedWheelDataGlobal({
-                        //     axle_location: null,
-                        //     wheel_pos: null,
-                        //     wheel_id: null,
-                        //     wheel_tin: null,
-                        //   }),
-                        // );
-                        // if (selectedId !== null) {
-                        //   sendMessage(selectedId, false);
-                        // }
                       }}>
                       <View
                         style={{
@@ -733,17 +622,6 @@ const Chasis = props => {
                       ]}
                       onPress={() => {
                         dispatch(setTinGlobal(wheel.tin));
-                        // dispatch(
-                        //   setSelectedWheelDataGlobal({
-                        //     axle_location: null,
-                        //     wheel_pos: null,
-                        //     wheel_id: null,
-                        //     wheel_tin: null,
-                        //   }),
-                        // );
-                        // if (selectedId !== null) {
-                        //   sendMessage(selectedId, false);
-                        // }
                       }}>
                       <Text style={styles.text}>S{wheel.wheel_id}</Text>
                     </TouchableOpacity>
@@ -849,70 +727,6 @@ const Chasis = props => {
           </View>
         ))}
       </View>
-
-      {/* <View style={styles.rectangle}>
-        <Text style={styles.text}>MHCV Model {props.model.id}</Text>
-        <View style={styles.spareContainer}>
-          <TouchableOpacity
-            style={[
-              styles.spare,
-              // {
-              //   backgroundColor:
-              //     wheel.tin != "" && wheel.tin != null
-              //       ? "green"
-              //       : props.selectedButtonRear1 === index &&
-              //         selectedWheelData.axle_id === backAxle.axle_id
-              //       ? "#ffbf00"
-              //       : "#ff2800",
-              // },
-              // {
-              //   height:
-              //     props.selectedButtonRear1 === index &&
-              //     selectedWheelData.axle_id === backAxle.axle_id
-              //       ? 35
-              //       : 30,
-              // },
-              // {
-              //   width:
-              //     props.selectedButtonRear1 === index &&
-              //     selectedWheelData.axle_id === backAxle.axle_id
-              //       ? 55
-              //       : 50,
-              // },
-            ]}
-            onPress={() => {
-              // onSelectButtonRear2(index);
-              // handleButtonPressRear1Right(index, backAxle.axle_id);
-              // dispatch(setTinGlobal(wheel.tin));
-            }}
-          >
-            <Text style={styles.text}>S1</Text>
-          </TouchableOpacity>
-           <TouchableOpacity style={styles.spare}>
-            <Text style={styles.text}>S1</Text>
-          </TouchableOpacity> 
-        </View> 
-
-        <Text style={styles.text}>MHCV Model</Text> 
-        <Text style={styles.text}>TATA LPT 4830 / SIGNA 4830.T</Text> 
-      </View> */}
-      {/* <STyre
-        model={carWithWheelsL}
-        selectedButtonFront={selectedButtonFrontLeft}
-        selectedButtonRear1={selectedButtonRear1Left}
-        selectedButtonRear2={selectedButtonRear2Left}
-        indexRecordFront={indexRecordFrontLeft}
-        indexRecordRear1={indexRecordRear1Left}
-        indexRecordRear2={indexRecordRear2Left}
-        onSelectButtonFront={handleButtonPressFrontLeft}
-        onSelectButtonRear1={handleButtonPressRear1Left}
-        onSelectButtonRear2={handleButtonPressRear2Left}
-        showMessage={showMessage}
-        elapsedTime={props.elapsedTime}
-        side={"left"}
-        fromCameraScreen={props.fromCameraScreen}
-        enableRescan={props.enableRescan}
-      /> */}
       <SAxle
         model={carWithWheelsL}
         selectedButtonFF={selectedButtonFFLeft}
@@ -935,7 +749,6 @@ const Chasis = props => {
         setSelectedWheelDataKey={handleSetSelectedWheelDataKey}
       />
     </View>
-    // </ScrollView>
   );
 };
 

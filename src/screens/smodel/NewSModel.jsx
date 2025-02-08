@@ -1,5 +1,4 @@
 import {
-  StyleSheet,
   Text,
   View,
   SafeAreaView,
@@ -9,7 +8,6 @@ import {
   ActivityIndicator,
   Image,
   TextInput,
-  Touchable,
   Modal,
   useWindowDimensions,
 } from 'react-native';
@@ -226,6 +224,8 @@ const Smodel = ({navigation, route}) => {
   const selectedWheelData = useSelector(
     state => state.app.selectedWheelDataGlobal,
   );
+
+  console.log('selectedWheelData from Smodel:', selectedWheelData);
   const globalToken = useSelector(state => state.token.tokenGlobal);
   const creden = useSelector(state => state.creden.creden);
 
@@ -238,39 +238,39 @@ const Smodel = ({navigation, route}) => {
   const [displayTin, setDisplayTin] = useState('');
   const [enableRescan, setEnableRescan] = useState(false);
   const [enableManualInput, setEnableManualInput] = useState(false);
-  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [manualModal, setManualModal] = useState(false);
   const [manualTIN, setManualTIN] = useState('');
   const [failedAttempts, setFailedAttempts] = useState({});
   const [deviceId, setDeviceId] = useState(null);
   const [loading, setLoading] = useState(true);
   const chasisRef = useRef(null);
-  const baseURL = 'https://jsonplaceholder.typicode.com';
 
   // const responseData = route.params?.responseData;
   // console.log("this is getback", responseData);
 
-  // Function to toggle dropdown
-  const toggleDropdown = () => {
-    setIsDropdownVisible(!isDropdownVisible);
-    console.log('Dropdown visible', isDropdownVisible);
+  // Function to handle back button press
+  const handleBackButtonClick = () => {
+    navigation.navigate('ScanVIN');
+    dispatch(
+      setSelectedWheelDataGlobal({
+        axle_location: null,
+        wheel_pos: null,
+        wheel_id: null,
+        wheel_tin: null,
+      }),
+    );
+    return true;
   };
 
-  //Function to handle back button press
-  // const handleBackButtonClick = () => {
-  //   navigation.navigate("ScanVIN");
-  //   return true;
-  // };
-
-  // useEffect(() => {
-  //   BackHandler.addEventListener("hardwareBackPress", handleBackButtonClick);
-  //   return () => {
-  //     BackHandler.removeEventListener(
-  //       "hardwareBackPress",
-  //       handleBackButtonClick
-  //     );
-  //   };
-  // }, [navigation]);
+  useEffect(() => {
+    BackHandler.addEventListener('hardwareBackPress', handleBackButtonClick);
+    return () => {
+      BackHandler.removeEventListener(
+        'hardwareBackPress',
+        handleBackButtonClick,
+      );
+    };
+  }, [navigation]);
 
   // Function to handle failed attempts
   const handleFailedAttempt = () => {
@@ -293,17 +293,14 @@ const Smodel = ({navigation, route}) => {
           },
           headers: {
             Accept: 'application/json',
-            // Authorization: `Bearer ${globalToken}`,
           },
         },
-
-        // `http://10.145.118.93:1337/cars/65be938eb07ee8101f175c08`
       );
 
       setApiResponseData(response.data); // Set the API response data in state
       setData(response.data);
       // console.log("response data:", response.data.axles_data[0]);
-      // console.log("response data:", response.data);
+      console.log('response data:', response.data);
     } catch (error) {
       console.error('Error fetching data from smodel websocket:', error);
     } finally {
@@ -318,6 +315,7 @@ const Smodel = ({navigation, route}) => {
     };
 
     fetchDeviceId();
+    // fetchData();
   }, []);
 
   //For updating the chassis whenever database is updated, removed since it is directly done from the chassis model, thus reducing the websocket connections
@@ -353,34 +351,31 @@ const Smodel = ({navigation, route}) => {
 
   useEffect(() => {
     // console.log('params', route.params.vin);
-    const fetchData = async () => {
-      try {
-        setLoading(true); // Set loading to true before making the request
-        const response = await axios.get(
-          creden.URI + `/cars/${route.params.vin}`,
-          {
-            params: {
-              token: globalToken,
-            },
-            headers: {
-              Accept: 'application/json',
-              // Authorization: `Bearer ${globalToken}`,
-            },
-          },
+    // const fetchData = async () => {
+    //   try {
+    //     setLoading(true); // Set loading to true before making the request
+    //     const response = await axios.get(
+    //       creden.URI + `/cars/${route.params.vin}`,
+    //       {
+    //         params: {
+    //           token: globalToken,
+    //         },
+    //         headers: {
+    //           Accept: 'application/json',
+    //         },
+    //       },
+    //     );
 
-          // `http://10.145.118.93:1337/cars/65be938eb07ee8101f175c08`
-        );
-
-        setApiResponseData(response.data); // Set the API response data in state
-        setData(response.data);
-        // console.log("response data:", response.data.axles_data[0]);
-        // console.log("response data:", response.data);
-      } catch (error) {
-        console.error('Error fetching data from Smodel:', error);
-      } finally {
-        setLoading(false); // Set loading to false after the request completes (whether successful or not)
-      }
-    };
+    //     setApiResponseData(response.data); // Set the API response data in state
+    //     setData(response.data);
+    //     // console.log("response data:", response.data.axles_data[0]);
+    //     // console.log("response data:", response.data);
+    //   } catch (error) {
+    //     console.error('Error fetching data from Smodel:', error);
+    //   } finally {
+    //     setLoading(false); // Set loading to false after the request completes (whether successful or not)
+    //   }
+    // };
     fetchData();
     setDisplayTin(
       route.params.responseData ? route.params.responseData.output : '',
@@ -393,7 +388,7 @@ const Smodel = ({navigation, route}) => {
         Alert.alert('Alert', 'Image not uploaded for the selected tyre wheel');
         dispatch(inactive());
       }
-      chasisRef.current.time();
+      // chasisRef.current.time();
     }, [alert, dispatch]),
   );
   // useEffect(() => {
@@ -423,15 +418,6 @@ const Smodel = ({navigation, route}) => {
   //   return unsubscribe;
   // }, [navigation, dispatch, creden]);
 
-  const get_by_ID = () => {
-    axios({
-      method: 'GET',
-      url: `${baseURL}/posts/${Math.floor(Math.random() * 100 + 1)}`,
-    })
-      .then(res => setData(res.data))
-      .catch(err => console.log(err));
-  };
-
   // console.log("model type:", typeof(route.params.model));
 
   const handleButtonPress = () => {
@@ -440,6 +426,7 @@ const Smodel = ({navigation, route}) => {
     setTimeout(() => chasisRef.current.scanned(), 1000); // 1000 milliseconds = 1 seconds
   };
 
+  //Used to display the TIN numbers
   const renderTINNumbers = () => {
     const axlesData = apiResponseData?.axles_data || [];
 
@@ -540,8 +527,6 @@ const Smodel = ({navigation, route}) => {
             },
             headers: {
               accept: 'application/json',
-              // Authorization:
-              // "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTU3NzYzOTIsInN1YiI6Ijc4OTQ1NiJ9.SERsXKqP1g5iV3Ly5zwmujj-9S3AgFKk2nvI8oPUMJI",
             },
           },
         );
@@ -561,6 +546,7 @@ const Smodel = ({navigation, route}) => {
     }
   };
 
+  //For toggle of rescan switch
   const handleValueChange = newValue => {
     setEnableRescan(newValue);
     if (!newValue) {
@@ -648,7 +634,7 @@ const Smodel = ({navigation, route}) => {
       </View>
       <View style={styles.container1}>
         {/* <Text>Smodel {route.params.model.id}</Text> */}
-        <View style={{height:vs(320), top:vs(10), marginBottom:vs(10) }}>
+        <View style={{height: vs(310), top: vs(50), marginBottom: vs(42)}}>
           <ScrollView
             contentContainerStyle={{
               flexGrow: 1,
@@ -656,6 +642,8 @@ const Smodel = ({navigation, route}) => {
               width: s(330), // Width of the inner content
               height: vs(400), // Height of the inner content
             }}
+            persistentScrollbar={true}
+
             // style={{backgroundColor: 'pink'}}
             // horizontal={true}
           >
@@ -678,7 +666,7 @@ const Smodel = ({navigation, route}) => {
           style={{
             flexDirection: 'row',
             width: '85%',
-            // top: vs(-20),
+            top: vs(10),
             justifyContent: 'center',
             // backgroundColor: 'black',
           }}>
@@ -801,8 +789,8 @@ const Smodel = ({navigation, route}) => {
         )}
         <View
           style={{
-            width: s(170),
-            height: vs(35),
+            width: s(160),
+            height: vs(30),
             // top: 160,
             borderRadius: s(30),
             // borderWidth: 3,
@@ -812,12 +800,13 @@ const Smodel = ({navigation, route}) => {
             zIndex: 2,
             // backgroundColor: '#31367b',
             backgroundColor: '#0f113e',
+            top: vs(10),
           }}
           // onPress={() => navigation.navigate("Login")}
         >
           <Text
             style={{
-              fontSize: ms(17),
+              fontSize: ms(15),
               color: '#d9d9d9',
               letterSpacing: ms(1),
               fontWeight: 'bold',
@@ -827,10 +816,10 @@ const Smodel = ({navigation, route}) => {
         </View>
         <Text
           style={{
-            fontSize: ms(17),
+            fontSize: ms(13),
             color: '#7f7f7f',
             textAlign: 'center',
-            top: vs(2),
+            top: vs(14),
           }}>
           Select individual tyres and scan the TIN
         </Text>
@@ -838,7 +827,7 @@ const Smodel = ({navigation, route}) => {
           style={{
             width: s(190),
             height: vs(35),
-            top: vs(5),
+            top: vs(18),
 
             borderRadius: s(12),
             // borderWidth: 3,
@@ -1014,7 +1003,7 @@ const Smodel = ({navigation, route}) => {
           style={{
             margin: s(20),
             marginBottom: vs(5),
-            top: vs(2),
+            top: vs(9),
             flexDirection: 'row',
             justifyContent: 'space-evenly',
             width: '90%',
@@ -1040,7 +1029,8 @@ const Smodel = ({navigation, route}) => {
               placeholder={globalTin ? globalTin : 'Scanned TIN no.'}
               placeholderTextColor="grey"
               style={{
-                height: vs(40),
+                top: vs(2),
+                height: vs(42),
                 width: s(180),
                 right: s(60),
                 fontSize: ms(15),
@@ -1058,63 +1048,7 @@ const Smodel = ({navigation, route}) => {
         tabLeftFunc={() => navigation.navigate('Dashboard')}
         tabRightFunc={handleLogout}
       />
-      {/*Modal for rescanning*/}
-      {/* <Modal
-        visible={isDropdownVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={toggleDropdown}>
-        <View style={styles.dropdown}>
-          <View
-            style={{
-              flexDirection: 'row',
-              // backgroundColor: "red",
-              width: 180,
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              borderBottomWidth: 1.5,
-              borderColor: '#31367b',
-            }}>
-            <View>
-              <Text style={{fontWeight: 'bold', fontSize: 15, color: 'black'}}>
-                Settings
-              </Text>
-            </View>
-            <TouchableOpacity onPress={toggleDropdown}>
-              <Image
-                source={close}
-                style={{
-                  resizeMode: 'contain',
-                  height: 28,
-                  width: 28,
-                }}></Image>
-            </TouchableOpacity>
-          </View>
 
-          <TouchableOpacity
-            style={[
-              styles.button,
-              enableRescan ? styles.buttonEnabled : styles.buttonDisabled,
-            ]}
-            onPress={() => {
-              setEnableRescan(!enableRescan);
-              dispatch(
-                setSelectedWheelDataGlobal({
-                  axle_location: '',
-                  // axle_id: axle_id,
-                  wheel_pos: '',
-                  wheel_id: '',
-                  wheel_tin: '',
-                }),
-              );
-              toggleDropdown();
-            }}>
-            <Text style={styles.buttonText}>
-              {enableRescan ? 'Disable Rescan' : 'Enable Rescan'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </Modal> */}
       <Modal
         animationType="fade"
         transparent={true}

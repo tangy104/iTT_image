@@ -13,7 +13,7 @@ const SAxle = props => {
     state => state.app.selectedWheelDataGlobal,
   );
   const creden = useSelector(state => state.creden.creden);
-  console.log('creden from axle:', creden.zone);
+  // console.log('creden from axle:', creden.zone);
 
   const handleButtonPressFF = (buttonIndex, tin) => {
     // let axleId;

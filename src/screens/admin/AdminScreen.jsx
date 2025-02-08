@@ -253,12 +253,15 @@ const Home = ({navigation, route}) => {
           <View style={styles.modalContainer}>
             <Text style={styles.modalTitle}>Add Ticket</Text>
 
-            <View style={styles.modalInputContainer}>
-              <Image source={id} style={styles.modalImage} />
+            <View style={styles.inputContainer}>
+              <Image
+                source={id}
+                style={{resizeMode: 'contain', height: vs(25), width: s(24)}}
+              />
               <TextInput
                 placeholder="Ticket no."
                 placeholderTextColor="grey"
-                style={styles.modalInput}
+                style={styles.input}
                 value={ticketNo}
                 onChangeText={text => setTicketNo(text)}
               />
@@ -441,5 +444,28 @@ const styles = ScaledSheet.create({
   text: {
     color: '#fff',
     fontSize: ms(16),
+  },
+  inputContainer: {
+    width: '196@s',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: '20@vs',
+    borderWidth: 1.5,
+    borderColor: '#3758ff',
+    borderColor: '#0f113e',
+    borderRadius: '12@ms',
+    paddingHorizontal: '10@s',
+    backgroundColor: 'white',
+    top: '20@vs',
+    marginBottom: '30@vs',
+    // backgroundColor:"red"
+  },
+  input: {
+    flex: 1,
+    height: '45@vs',
+    top: '3@vs',
+    paddingHorizontal: '6@s',
+    color: 'black',
+    // backgroundColor: 'red',
   },
 });

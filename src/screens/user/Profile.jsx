@@ -376,24 +376,24 @@ const Home = ({navigation}) => {
           </Animated.Text> */}
           <Image
             source={iTTText}
-            style={{resizeMode: 'contain', width: s(250), top: vs(12)}}
+            style={{resizeMode: 'contain', width: s(250), top: vs(0)}}
           />
           <Text style={styles.text1}> User profile</Text>
           <View
             style={{
-              height: s(140),
-              width: s(140),
+              height: s(100),
+              width: s(100),
               borderRadius: ms(100),
               borderWidth: 3,
               borderColor: '#d9d9d9',
-              top: vs(30),
+              top: vs(0),
               backgroundColor: '#3758ff',
               // backgroundColor: '#990000',
               justifyContent: 'center',
               alignItems: 'center',
             }}>
             <TouchableOpacity
-              style={{position: 'absolute', left: s(110), top: vs(10)}}
+              style={{position: 'absolute', left: s(75), top: vs(0)}}
               onPress={() => setIsModalVisible(!isModalVisible)}>
               <Image source={pencil} />
             </TouchableOpacity>
@@ -409,8 +409,8 @@ const Home = ({navigation}) => {
                 flex: data && data.photo_path ? 1 : 0,
                 zIndex: -1,
                 borderRadius: ms(100),
-                width: data && data.photo_path ? s(144) : s(80),
-                height: data && data.photo_path ? s(144) : s(80),
+                width: data && data.photo_path ? s(144) : s(70),
+                height: data && data.photo_path ? s(144) : s(70),
               }}
             />
           </View>
@@ -423,14 +423,14 @@ const Home = ({navigation}) => {
             </Animated.Text> */}
           {/* <Text style={{ fontFamily: "Allura_400Regular", fontSize: 25, color: "#fff" }}> */}
 
-          <Text style={{fontSize: ms(30), top: vs(30), color: 'black'}}>
+          <Text style={{fontSize: ms(24), top: vs(0), color: 'black'}}>
             {data && data.first_name && data.last_name
               ? data.first_name + ' ' + data.last_name
               : 'Username not available'}
           </Text>
           <View
             style={{
-              top: vs(25),
+              top: vs(0),
               flexDirection: 'column',
               justifyContent: 'flex-start',
               alignItems: 'flex-start',
@@ -457,7 +457,7 @@ const Home = ({navigation}) => {
             </View> */}
             <View
               style={{
-                top: vs(5),
+                top: vs(0),
                 flexDirection: 'row',
                 justifyContent: 'center',
                 alignItems: 'center',
@@ -483,7 +483,7 @@ const Home = ({navigation}) => {
               // backgroundColor: 'red',
               width: '100%',
               height: vs(170),
-              top: vs(50),
+              top: vs(0),
               alignItems: 'center',
             }}>
             {/* <ScrollView style={styles.container}>
@@ -508,10 +508,12 @@ const Home = ({navigation}) => {
                 width: '90%',
                 padding: s(8),
                 backgroundColor: '#3758ff',
+                // backgroundColor: 'red',
                 // justifyContent: 'center',
                 // alignItems: 'center',
                 borderRadius: ms(14),
-                // height: 300,
+                top: -vs(4),
+                // height: vs(390),
               }}>
               <View
                 style={{
@@ -524,7 +526,7 @@ const Home = ({navigation}) => {
                   style={{
                     color: '#fff',
                     fontWeight: 'bold',
-                    fontSize: ms(19),
+                    fontSize: ms(18),
                     alignSelf: 'center',
                     textDecorationLine: 'underline',
                     left: s(15),
@@ -940,9 +942,9 @@ const styles = StyleSheet.create({
   },
   text1: {
     // position: "absolute",
-    top: vs(25),
+    top: -vs(20),
     color: '#d9d9d9',
-    fontSize: ms(20),
+    fontSize: ms(18),
     fontWeight: 'bold',
     letterSpacing: ms(3),
     // flex: 1,

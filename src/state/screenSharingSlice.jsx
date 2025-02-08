@@ -152,7 +152,7 @@ export const screenSharingSlice = createSlice({
         clearInterval(state.intervalId);
         state.intervalId = null;
       }
-      Alert.alert('WebSocket Error', 'Please check your network connection.');
+      // Alert.alert('WebSocket Error', 'Please check your network connection.');
     },
     beginCapture: (state, action) => {
       state.isCapturing = true;

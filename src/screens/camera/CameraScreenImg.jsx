@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
   useWindowDimensions,
+  StyleSheet,
 } from 'react-native';
 import {Switch} from 'react-native-switch';
 import {ScaledSheet, s, vs, ms} from 'react-native-size-matters';
@@ -16,6 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useSelector, useDispatch} from 'react-redux';
 import {setTinGlobal} from '../../state/tinslice';
 import {setCreden} from '../../state/credenSlice';
+import {setSelectedWheelDataGlobal} from '../../state/selectSlice';
 import {active, inactive} from '../../state/alertSlice';
 // import {ApiVideoLiveStreamView} from '@api.video/react-native-livestream';
 // import {Camera, CameraType} from 'expo-camera';
@@ -38,12 +40,16 @@ import logoKGP2 from '../../utils/images/logoKGP2.png';
 import logout from '../../utils/images/logout.png';
 import doc from '../../utils/images/doc.png';
 import flashIcon from '../../utils/images/flash.png';
+import circarr from '../../utils/images/circarr.png';
+import backS from '../../utils/images/backS.png';
 
 const CameraScreen = ({navigation, route}) => {
   const {height, width} = useWindowDimensions();
   const ref = useRef(null);
   const [streaming, setStreaming] = useState(false);
   const [gotResponse, setGotResponse] = useState(false);
+
+  const [hasError, setHasError] = useState(false);
 
   const [enableManualInput, setEnableManualInput] = useState(true);
   const [manualTIN, setManualTIN] = useState('');
@@ -58,6 +64,8 @@ const CameraScreen = ({navigation, route}) => {
   //   const [type, setType] = useState(Camera.Constants.Type.back);
   //   const [flash, setFlash] = useState(Camera.Constants.FlashMode.off);
   const [image, setImage] = useState(null);
+
+  const [image64, setImage64] = useState(null);
   const [zoom, setZoom] = useState(0);
   const [torch, setTorch] = useState(false);
   const [flash, setFlash] = useState(true);
@@ -206,6 +214,12 @@ const CameraScreen = ({navigation, route}) => {
   //   }
   // };
 
+  const isBase64 = str => {
+    const base64Regex =
+      /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+    return base64Regex.test(str);
+  };
+
   //One click upload functionality for image
   const directUpload = async () => {
     setStreaming(true);
@@ -219,7 +233,7 @@ const CameraScreen = ({navigation, route}) => {
         // Compress the image before uploading
         const compressedImage = await ImageManipulator.manipulateAsync(
           data.uri,
-          [{resize: {width: 800}}], // Resize the image to a width of 800px
+          [{resize: {width: 1500}}], // Resize the image to a width of 800px
           {compress: 1, format: ImageManipulator.SaveFormat.JPEG}, // Compress and convert to JPEG format
         );
         setImage(compressedImage.uri);
@@ -237,7 +251,7 @@ const CameraScreen = ({navigation, route}) => {
         formData.append('wheel_id', selectedWheelData.wheel_id);
         formData.append('token', globalToken);
         formData.append('uid', deviceId);
-        formData.append('forced_entry', true);
+        formData.append('forced_entry', '');
 
         console.log('formdata is', formData);
         // Record the timestamp when starting the Axios request
@@ -320,19 +334,44 @@ const CameraScreen = ({navigation, route}) => {
 
         setHeaders(response);
       } catch (error) {
+        setHasError(true);
         if (error.response) {
           // Server responded with a status other than 200 range
           console.log('Error response data:', error.response.data);
           console.log('Error response status:', error.response.status);
           console.log('Error response headers:', error.response.headers);
-          setHeaders(error.response.data.detail);
-          if (error.response.status === 404) {
+
+          if (error.response.status === 400) {
+            setHeaders(error.response.data.detail);
+          } else if (error.response.status === 404) {
+            setHeaders(error.response.data.detail);
+          } else if (error.response.status === 441) {
+            setHeaders('No TIN detected\nReason: ROI cannot be found');
+          } else if (error.response.status === 442) {
+            setHeaders('No TIN detected\nReason: Badly captured ROI');
+          } else if (error.response.status === 443) {
+            setImage64(error.response.data.detail);
+            setHeaders(
+              'No TIN detected\nReason: Some characters cannot be detected',
+            );
+          } else if (error.response.status === 444) {
+            setHeaders('No TIN detected\nReason: Model failed to detect');
+          } else {
             setHeaders(error.response.data.detail);
           }
+          // else if (isBase64(error.response.data.detail)) {
+          //   // <Image
+          //   //   source={{ uri: `data:image/jpeg;base64,${response.detail}` }}
+          //   //   style={{ width: 200, height: 200 }}
+          //   // />
+          //   setImage64(error.response.data.detail);
+          //   setHeaders('Please find the faulty text below.');
+          // }
         } else if (error.request) {
           // Request was made but no response received
           console.log('Error request:', error.request);
-          setHeaders('No serial number detected');
+          // setHeaders('No serial number detected');
+          setHeaders('There was an error in server response');
         } else {
           // Something else happened in setting up the request
           console.log('Error message:', error.message);
@@ -392,6 +431,14 @@ const CameraScreen = ({navigation, route}) => {
               {
                 text: 'Proceed',
                 onPress: () => {
+                  dispatch(
+                    setSelectedWheelDataGlobal({
+                      axle_location: null,
+                      wheel_pos: null,
+                      wheel_id: null,
+                      wheel_tin: null,
+                    }),
+                  );
                   navigation.navigate('NewSmodel', {
                     model: route.params.model,
                     responseData: response.data.output,
@@ -408,6 +455,7 @@ const CameraScreen = ({navigation, route}) => {
           // fetchData();
         }
       } catch (error) {
+        setHasError(true);
         console.error('Error:', error);
       }
     } else {
@@ -616,6 +664,458 @@ const CameraScreen = ({navigation, route}) => {
               </View>
             )}
             {image && (
+              <>
+                <Image
+                  source={{uri: image}}
+                  // source={chassis}
+                  style={{
+                    // width: '100%',
+                    height: '100%',
+                    marginBottom: vs(20),
+                    resizeMode: 'cover',
+                  }}
+                  onLoadStart={() => setImgLoading(true)}
+                  onLoad={() => setImgLoading(false)}
+                  onLoadEnd={() => setImgLoading(false)}
+                />
+                {headers ===
+                  'No TIN detected\nReason: Model failed to detect' && (
+                  // 'No TIN detected\nReason: Some characters cannot be detected' && (
+                  <View
+                    style={{
+                      height: '100%',
+                      width: '30%',
+                      marginLeft: '70%',
+                      // backgroundColor: 'red',
+                      position: 'absolute',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}>
+                    {/* <View style={styles.halfCircle}>
+                      
+                      <View style={[styles.arrow, styles.topArrow]} />
+                
+                      <View style={[styles.arrow, styles.bottomArrow]} />
+                    </View> */}
+                    <Image
+                      source={circarr}
+                      style={{
+                        resizeMode: 'contain',
+                        height: vs(130),
+                        width: s(200),
+                      }}
+                    />
+                  </View>
+                )}
+              </>
+            )}
+            {headers && (
+              <View
+                style={{
+                  top: '65%',
+                  alignSelf: 'center',
+                  position: 'absolute',
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  padding: s(15),
+                  borderRadius: ms(10),
+                  elevation: 5,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  width: '70%',
+                  minHeight: vs(50),
+                  height: '28%',
+                }}>
+                {
+                  // headers === 'No serial number detected' ||
+                  // headers ===
+                  //   'No character detected while feeding to character detection model' ||
+                  // headers === 'No serial number could be detected finally' ||
+                  // headers === 'TIN already scanned'
+
+                  hasError ? (
+                    image64 ? (
+                      <View
+                        style={{
+                          // top: '65%',
+                          top: vs(-52),
+                          alignSelf: 'center',
+                          position: 'absolute',
+                          backgroundColor: 'rgb(255, 255, 255)',
+                          // padding: s(15),
+                          borderRadius: ms(10),
+                          elevation: 5,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          // width: '100%',
+                          width: s(320),
+                          minHeight: vs(50),
+                          // height: '28%',
+                          height: vs(200),
+                        }}>
+                        <Text
+                          style={{
+                            fontSize: ms(12),
+                            fontWeight: 'bold',
+                            marginBottom: vs(1),
+                            color: 'black',
+                            textAlign: 'center',
+                            borderTop: vs(10),
+                          }}>
+                          {headers}
+                        </Text>
+                        <Image
+                          source={{
+                            uri: `data:image/jpeg;base64,${image64}`,
+                          }}
+                          style={{
+                            resizeMode: 'contain',
+                            width: s(310),
+                            height: vs(60),
+                          }}
+                        />
+
+                        <Text
+                          style={{
+                            color: 'black',
+                            textAlign: 'center',
+                            marginBottom: 5,
+                          }}>
+                          Do you want to proceed with manual input?
+                        </Text>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            width: '100%',
+                            justifyContent: 'space-evenly',
+                          }}>
+                          <TouchableOpacity
+                            style={{
+                              width: s(100),
+                              height: vs(40),
+                              // top: 160,
+                              borderRadius: ms(12),
+                              // borderWidth: 3,
+                              // borderColor: "#3758ff",
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                              zIndex: 2,
+                              // backgroundColor: '#3758ff',
+                              // backgroundColor: '#03c04a',
+                              backgroundColor: 'red',
+                              marginTop: vs(5),
+                            }}
+                            onPress={() => {
+                              // dispatch(setTinGlobal(headers['output']));
+                              setHasError(false); // Reset the error state
+                              setGotResponse(false);
+                              setImage(null);
+                              setImage64(null);
+                              setHeaders(null);
+                              setTimeout(() => {
+                                setTorch(false);
+                                console.log('torch off');
+                              }, 500);
+                            }}>
+                            <Text
+                              style={{
+                                color: '#fff',
+                                fontWeight: 'bold',
+                                fontSize: ms(17),
+                                letterSpacing: 1,
+                              }}>
+                              Rescan
+                            </Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={{
+                              width: s(100),
+                              height: vs(40),
+                              // top: 160,
+                              borderRadius: ms(12),
+                              // borderWidth: 3,
+                              // borderColor: "#3758ff",
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                              zIndex: 2,
+                              // backgroundColor: '#3758ff',
+                              // backgroundColor: '#03c04a',
+                              backgroundColor: 'darkgreen',
+                              marginTop: vs(5),
+                            }}
+                            onPress={() => {
+                              setEnableManualInput(!enableManualInput);
+                              setHasError(false); // Reset the error state
+                              setGotResponse(false);
+                              setImage(null);
+                              setImage64(null);
+                              setHeaders(null);
+                            }}>
+                            <Text
+                              style={{
+                                color: '#fff',
+                                fontWeight: 'bold',
+                                fontSize: ms(17),
+                                letterSpacing: ms(1),
+                              }}>
+                              Manual
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    ) : (
+                      <>
+                        <Text
+                          style={{
+                            fontSize: ms(12),
+                            fontWeight: 'bold',
+                            marginBottom: vs(10),
+                            color: 'black',
+                            textAlign: 'center',
+                          }}>
+                          {/* {headers === 'TIN already scanned'
+                      ? 'TIN already scanned'
+                      : 'No TIN detected'} */}
+
+                          {headers}
+                        </Text>
+                        <Text
+                          style={{
+                            color: 'black',
+                            textAlign: 'center',
+                            marginBottom: 2,
+                          }}>
+                          Do you want to proceed with manual input?
+                        </Text>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            width: '100%',
+                            justifyContent: 'space-evenly',
+                          }}>
+                          <TouchableOpacity
+                            style={{
+                              width: s(100),
+                              height: vs(40),
+                              // top: 160,
+                              borderRadius: ms(12),
+                              // borderWidth: 3,
+                              // borderColor: "#3758ff",
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                              zIndex: 2,
+                              // backgroundColor: '#3758ff',
+                              // backgroundColor: '#03c04a',
+                              backgroundColor: 'red',
+                              marginTop: vs(5),
+                            }}
+                            onPress={() => {
+                              // dispatch(setTinGlobal(headers['output']));
+                              setHasError(false); // Reset the error state
+                              setGotResponse(false);
+                              setImage(null);
+                              setImage64(null);
+                              setHeaders(null);
+                              setTimeout(() => {
+                                setTorch(false);
+                                console.log('torch off');
+                              }, 500);
+                            }}>
+                            <Text
+                              style={{
+                                color: '#fff',
+                                fontWeight: 'bold',
+                                fontSize: ms(17),
+                                letterSpacing: 1,
+                              }}>
+                              Rescan
+                            </Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={{
+                              width: s(100),
+                              height: vs(40),
+                              // top: 160,
+                              borderRadius: ms(12),
+                              // borderWidth: 3,
+                              // borderColor: "#3758ff",
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                              zIndex: 2,
+                              // backgroundColor: '#3758ff',
+                              // backgroundColor: '#03c04a',
+                              backgroundColor: 'darkgreen',
+                              marginTop: vs(5),
+                            }}
+                            onPress={() => {
+                              setEnableManualInput(!enableManualInput);
+                              setHasError(false); // Reset the error state
+                              setGotResponse(false);
+                              setImage(null);
+                              setImage64(null);
+                              setHeaders(null);
+                            }}>
+                            <Text
+                              style={{
+                                color: '#fff',
+                                fontWeight: 'bold',
+                                fontSize: ms(17),
+                                letterSpacing: ms(1),
+                              }}>
+                              Manual
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      </>
+                    )
+                  ) : (
+                    <>
+                      <Text
+                        style={{
+                          fontSize: ms(16),
+                          fontWeight: 'bold',
+                          // marginBottom: 10,
+                          color: 'black',
+                        }}>
+                        Extracted Data
+                      </Text>
+                      <View
+                        style={{
+                          margin: s(2),
+                          // marginTop: 15,
+                          flexDirection: 'column',
+                          justifyContent: 'space-evenly',
+                          width: s(220),
+                          // height: 40,
+                          // top: 160,
+                          borderRadius: ms(12),
+                          borderWidth: 1.5,
+                          // borderColor: '#3758ff',
+                          // borderColor: '#990000',
+                          borderColor: '#0f113e',
+                          // justifyContent: "center",
+                          // alignItems: 'center',
+                          // backgroundColor: "red",
+                          padding: 5,
+                        }}>
+                        <Text style={{color: 'black', fontWeight: 'bold'}}>
+                          TIN: {headers['output']}
+                          {/* TIN: {headers.output} */}
+                        </Text>
+                        <Text style={{color: 'black', fontWeight: 'bold'}}>
+                          Make: {headers['make']}
+                        </Text>
+                      </View>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          width: '100%',
+                          justifyContent: 'space-evenly',
+                        }}>
+                        <TouchableOpacity
+                          style={{
+                            width: s(100),
+                            height: vs(40),
+                            // top: 160,
+                            borderRadius: ms(12),
+                            // borderWidth: 3,
+                            // borderColor: "#3758ff",
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            zIndex: 2,
+                            // backgroundColor: '#3758ff',
+                            // backgroundColor: '#03c04a',
+                            backgroundColor: 'red',
+                            marginTop: vs(5),
+                          }}
+                          onPress={() => {
+                            // dispatch(setTinGlobal(headers['output']));
+                            setGotResponse(false);
+                            setHasError(false);
+                            setImage(null);
+                            setTimeout(() => {
+                              setTorch(false);
+                              console.log('torch off');
+                            }, 500);
+                          }}>
+                          <Text
+                            style={{
+                              color: '#fff',
+                              fontWeight: 'bold',
+                              fontSize: ms(17),
+                              letterSpacing: ms(1),
+                            }}>
+                            Rescan
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={{
+                            width: s(100),
+                            height: vs(40),
+                            // top: 160,
+                            borderRadius: ms(12),
+                            // borderWidth: 3,
+                            // borderColor: "#3758ff",
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            zIndex: 2,
+                            // backgroundColor: '#3758ff',
+                            // backgroundColor: '#03c04a',
+                            backgroundColor: 'darkgreen',
+                            marginTop: vs(5),
+                          }}
+                          onPress={() => {
+                            dispatch(
+                              setSelectedWheelDataGlobal({
+                                axle_location: null,
+                                wheel_pos: null,
+                                wheel_id: null,
+                                wheel_tin: null,
+                              }),
+                            );
+                            dispatch(setTinGlobal(headers['output']));
+                            navigation.navigate('NewSmodel', {
+                              model: route.params.model,
+                              responseData: headers['output'],
+                              vin: route.params.vin,
+                              // id: route.params.id,
+                              // elapsedTime: alertTime,
+                            });
+                          }}>
+                          <Text
+                            style={{
+                              color: '#fff',
+                              fontWeight: 'bold',
+                              fontSize: ms(17),
+                              letterSpacing: ms(1),
+                            }}>
+                            Proceed
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </>
+                  )
+                }
+              </View>
+            )}
+          </View>
+        ) : image ? (
+          <View style={{backgroundColor: 'black', flex: 1, width: '100%'}}>
+            {imgLoading && (
+              <View
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                }}>
+                <ActivityIndicator size="large" color="#fff" />
+              </View>
+            )}
+            {image && (
               <Image
                 source={{uri: image}}
                 // source={chassis}
@@ -630,242 +1130,59 @@ const CameraScreen = ({navigation, route}) => {
                 onLoadEnd={() => setImgLoading(false)}
               />
             )}
-            {headers && (
-              <View
+            <View
+              style={{
+                position: 'absolute',
+                justifyContent: 'center',
+                alignItems: 'center',
+                top: '78%',
+                left: '19%',
+              }}>
+              <TouchableOpacity
                 style={{
-                  top: '72%',
-                  alignSelf: 'center',
-                  position: 'absolute',
-                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                  padding: s(15),
-                  borderRadius: ms(10),
-                  elevation: 5,
+                  width: s(220),
+                  height: vs(40),
+                  borderRadius: ms(12),
+                  // backgroundColor: '#3758ff',
+                  // backgroundColor: '#03c04a',
+                  backgroundColor: 'darkgreen',
+                  // alignSelf: 'center',
                   justifyContent: 'center',
                   alignItems: 'center',
-                  width: '70%',
-                  minHeight: vs(50),
-                  height: '20%',
-                }}>
-                {headers === 'No serial number detected' ||
-                headers ===
-                  'No character detected while feeding to character detection model' ||
-                headers === 'No serial number could be detected finally' ? (
-                  <>
-                    <Text
-                      style={{
-                        fontSize: ms(15),
-                        fontWeight: 'bold',
-                        marginBottom: vs(10),
-                        color: 'black',
-                        textAlign: 'center',
-                      }}>
-                      No TIN detected
-                      {/* {headers} */}
-                    </Text>
-                    <Text
-                      style={{
-                        color: 'black',
-                        textAlign: 'center',
-                        marginBottom: 2,
-                      }}>
-                      Do you want to proceed with manual input?
-                    </Text>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        width: '100%',
-                        justifyContent: 'space-evenly',
-                      }}>
-                      <TouchableOpacity
-                        style={{
-                          width: s(100),
-                          height: vs(40),
-                          // top: 160,
-                          borderRadius: ms(12),
-                          // borderWidth: 3,
-                          // borderColor: "#3758ff",
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          zIndex: 2,
-                          // backgroundColor: '#3758ff',
-                          // backgroundColor: '#03c04a',
-                          backgroundColor: 'red',
-                          marginTop: vs(5),
-                        }}
-                        onPress={() => {
-                          // dispatch(setTinGlobal(headers['output']));
-                          setGotResponse(false);
-                          setImage(null);
-                          setHeaders(null);
-                          setTimeout(() => {
-                            setTorch(false);
-                            console.log('torch off');
-                          }, 500);
-                        }}>
-                        <Text
-                          style={{
-                            color: '#fff',
-                            fontWeight: 'bold',
-                            fontSize: ms(17),
-                            letterSpacing: 1,
-                          }}>
-                          Rescan
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={{
-                          width: s(100),
-                          height: vs(40),
-                          // top: 160,
-                          borderRadius: ms(12),
-                          // borderWidth: 3,
-                          // borderColor: "#3758ff",
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          zIndex: 2,
-                          // backgroundColor: '#3758ff',
-                          // backgroundColor: '#03c04a',
-                          backgroundColor: 'darkgreen',
-                          marginTop: vs(5),
-                        }}
-                        onPress={() => {
-                          setEnableManualInput(!enableManualInput);
-                          setGotResponse(false);
-                          setImage(null);
-                          setHeaders(null);
-                        }}>
-                        <Text
-                          style={{
-                            color: '#fff',
-                            fontWeight: 'bold',
-                            fontSize: ms(17),
-                            letterSpacing: ms(1),
-                          }}>
-                          Manual
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </>
-                ) : (
-                  <>
-                    <Text
-                      style={{
-                        fontSize: ms(16),
-                        fontWeight: 'bold',
-                        // marginBottom: 10,
-                        color: 'black',
-                      }}>
-                      Extracted Data
-                    </Text>
-                    <View
-                      style={{
-                        margin: s(2),
-                        // marginTop: 15,
-                        flexDirection: 'column',
-                        justifyContent: 'space-evenly',
-                        width: s(220),
-                        // height: 40,
-                        // top: 160,
-                        borderRadius: ms(12),
-                        borderWidth: 1.5,
-                        // borderColor: '#3758ff',
-                        // borderColor: '#990000',
-                        borderColor: '#0f113e',
-                        // justifyContent: "center",
-                        // alignItems: 'center',
-                        // backgroundColor: "red",
-                        padding: 5,
-                      }}>
-                      <Text style={{color: 'black', fontWeight: 'bold'}}>
-                        TIN: {headers['output']}
-                        {/* TIN: {headers.output} */}
-                      </Text>
-                      <Text style={{color: 'black', fontWeight: 'bold'}}>
-                        Make: {headers['make']}
-                      </Text>
-                    </View>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        width: '100%',
-                        justifyContent: 'space-evenly',
-                      }}>
-                      <TouchableOpacity
-                        style={{
-                          width: s(100),
-                          height: vs(40),
-                          // top: 160,
-                          borderRadius: ms(12),
-                          // borderWidth: 3,
-                          // borderColor: "#3758ff",
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          zIndex: 2,
-                          // backgroundColor: '#3758ff',
-                          // backgroundColor: '#03c04a',
-                          backgroundColor: 'red',
-                          marginTop: vs(5),
-                        }}
-                        onPress={() => {
-                          // dispatch(setTinGlobal(headers['output']));
-                          setGotResponse(false);
-                          setImage(null);
-                          setTimeout(() => {
-                            setTorch(false);
-                            console.log('torch off');
-                          }, 500);
-                        }}>
-                        <Text
-                          style={{
-                            color: '#fff',
-                            fontWeight: 'bold',
-                            fontSize: ms(17),
-                            letterSpacing: ms(1),
-                          }}>
-                          Rescan
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={{
-                          width: s(100),
-                          height: vs(40),
-                          // top: 160,
-                          borderRadius: ms(12),
-                          // borderWidth: 3,
-                          // borderColor: "#3758ff",
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          zIndex: 2,
-                          // backgroundColor: '#3758ff',
-                          // backgroundColor: '#03c04a',
-                          backgroundColor: 'darkgreen',
-                          marginTop: vs(5),
-                        }}
-                        onPress={() => {
-                          dispatch(setTinGlobal(headers['output']));
-                          navigation.navigate('NewSmodel', {
-                            model: route.params.model,
-                            responseData: headers['output'],
-                            vin: route.params.vin,
-                            // id: route.params.id,
-                            // elapsedTime: alertTime,
-                          });
-                        }}>
-                        <Text
-                          style={{
-                            color: '#fff',
-                            fontWeight: 'bold',
-                            fontSize: ms(17),
-                            letterSpacing: ms(1),
-                          }}>
-                          Proceed
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </>
-                )}
-              </View>
-            )}
+                  zIndex: 5,
+                }}
+                //onPress={() => {
+                //   if (streaming) {
+                //     ref.current?.stopStreaming();
+                //     setStreaming(false);
+                //   } else {
+                //     ref.current?.startStreaming(
+                //       `${creden.ticket}`,
+                //       creden.RTMP_URI,
+                //     );
+                //     setStreaming(true);
+                //     updateData();
+                //   }
+                //directUpload();
+
+                //}}
+                disabled={streaming} // Disable button when processing
+                // onPress={() => {
+                //   if (!streaming) {
+                //     directUpload();
+                //   }
+                // }}
+              >
+                <Text
+                  style={{
+                    color: '#fff',
+                    fontSize: ms(17),
+                    fontWeight: 'bold',
+                  }}>
+                  {streaming ? 'Processing' : 'Capture'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         ) : (
           <View
@@ -907,19 +1224,26 @@ const CameraScreen = ({navigation, route}) => {
                       alignItems: 'center',
                       zIndex: 5,
                     }}
+                    disabled={streaming}
+                    // onPress={() => {
+                    //   if (streaming) {
+                    //     ref.current?.stopStreaming();
+                    //     setStreaming(false);
+                    //   } else {
+                    //     ref.current?.startStreaming(
+                    //       `${creden.ticket}`,
+                    //       creden.RTMP_URI,
+                    //     );
+                    //     setStreaming(true);
+                    //     updateData();
+                    //   }
+                    // directUpload();
+
+                    // }}
                     onPress={() => {
-                      //   if (streaming) {
-                      //     ref.current?.stopStreaming();
-                      //     setStreaming(false);
-                      //   } else {
-                      //     ref.current?.startStreaming(
-                      //       `${creden.ticket}`,
-                      //       creden.RTMP_URI,
-                      //     );
-                      //     setStreaming(true);
-                      //     updateData();
-                      //   }
-                      directUpload();
+                      if (!streaming) {
+                        directUpload();
+                      }
                     }}>
                     <Text
                       style={{
@@ -927,7 +1251,7 @@ const CameraScreen = ({navigation, route}) => {
                         fontSize: ms(17),
                         fontWeight: 'bold',
                       }}>
-                      {streaming ? 'Capturing' : 'Capture'}
+                      {streaming ? 'Processing' : 'Capture'}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -937,15 +1261,68 @@ const CameraScreen = ({navigation, route}) => {
         )}
 
         <Tabs
-          left={dash}
+          left={backS}
           center={logoKGP2}
           right={logout}
-          tabLeftFunc={() => navigation.navigate('Dashboard')}
+          tabLeftFunc={() => {
+            // dispatch(
+            //   setSelectedWheelDataGlobal({
+            //     axle_location: null,
+            //     wheel_pos: null,
+            //     wheel_id: null,
+            //     wheel_tin: null,
+            //   }),
+            // );
+            // dispatch(setTinGlobal(headers['output']));
+            navigation.navigate('NewSmodel', {
+              model: route.params.model,
+              // responseData: headers['output'],
+              vin: route.params.vin,
+              // id: route.params.id,
+              // elapsedTime: alertTime,
+            });
+          }}
           tabRightFunc={handleLogout}
         />
       </View>
     </GestureHandlerRootView>
   );
 };
+
+const styles = StyleSheet.create({
+  halfCircleArrow: {
+    width: 50,
+    height: 90,
+    borderWidth: 5,
+    borderColor: 'black',
+    borderTopRightRadius: 50,
+    borderBottomRightRadius: 50,
+    borderLeftWidth: 0, // Remove left border
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  arrow: {
+    position: 'absolute',
+    width: 10,
+    height: 10,
+    borderColor: 'black',
+    borderWidth: 5,
+  },
+  topArrow: {
+    top: -10,
+    left: -2,
+    borderLeftWidth: 5,
+    borderBottomWidth: 5,
+    transform: [{rotate: '45deg'}],
+  },
+  bottomArrow: {
+    bottom: -10,
+    left: -2,
+    borderLeftWidth: 5,
+    borderTopWidth: 5,
+    transform: [{rotate: '-45deg'}],
+  },
+});
 
 export default CameraScreen;

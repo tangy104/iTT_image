@@ -272,7 +272,7 @@ const Login = ({navigation, route}) => {
                 // padding: 16,
                 // backgroundColor: 'red',
                 width: s(220),
-                top: vs(40),
+                top: vs(20),
               }}>
               <Dropdown
                 style={{
@@ -317,7 +317,7 @@ const Login = ({navigation, route}) => {
                       // alignItems: 'center',
                       // paddingTop: label === 'Rear' ? 10 : 5,
                       // paddingBottom: label === 'Rear' ? 5 : 15,
-                      paddingVertical: vs(10),
+                      paddingVertical: vs(6),
                       height: vs(40),
                       paddingHorizontal: s(10),
                       borderRadius: ms(12),
@@ -395,7 +395,7 @@ const Login = ({navigation, route}) => {
                 <TextInput
                   placeholder="Passkey"
                   placeholderTextColor="grey"
-                  style={{height: vs(40), width: s(150), color: 'black'}}
+                  style={{height: vs(40), top:vs(3), width: s(150), color: 'black'}}
                   secureTextEntry
                   value={password}
                   onChangeText={text => setPassword(text)}
@@ -492,16 +492,16 @@ const styles = ScaledSheet.create({
     borderRadius: '12@ms',
     paddingHorizontal: '10@s',
     backgroundColor: 'white',
-    top: '50@vs',
+    top: '20@vs',
     // backgroundColor:"red"
   },
   input: {
     flex: 1,
-    height: '40@vs',
-    // top: '10@vs',
+    height: '43@vs',
+    // top: '4@vs',
     paddingHorizontal: '6@s',
     color: 'black',
-    backgroundColor: 'red',
+    // backgroundColor: 'red',
   },
   loginButton: {
     width: '196@s',

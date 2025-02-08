@@ -129,7 +129,7 @@ const Tabs = props => {
               resizeMode: 'contain',
               // top: -34,
               top: vs(-18),
-              width: currentScreenName === 'Home' ? s(80) : s(75),
+              width: currentScreenName === 'Home' ? s(80) : s(65),
             }}
           />
         </TouchableOpacity>

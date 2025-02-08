@@ -378,6 +378,7 @@ const BarcodeScannerScreen = ({navigation}) => {
 
   const postBarcodeData = async () => {
     let response;
+    console.log('started posting VIN/VC');
     try {
       setLoading(true); // Set loading to true before making the request
       // If the VIN number does not exist, perform a POST request to create a new entry
@@ -392,7 +393,7 @@ const BarcodeScannerScreen = ({navigation}) => {
           // Authorization: "Bearer lemon",
         },
       });
-      // console.log("response data:", response.data);
+      console.log('response data from vincamera:', response.data);
 
       navigation.replace('NewSmodel', {
         title: 'MHCV Model' + ' ' + `${response.data.vin}`,
@@ -880,7 +881,7 @@ const BarcodeScannerScreen = ({navigation}) => {
                         width: s(150),
                         right: s(40),
                         fontSize: ms(14),
-                        top: vs(9),
+                        top: vs(5),
                         color: 'black',
                       }}>
                       {barcode1}
@@ -893,7 +894,7 @@ const BarcodeScannerScreen = ({navigation}) => {
                     // />
                     <Text
                       style={{
-                        height: vs(35),
+                        height: vs(42),
                         width: s(150),
                         right: s(40),
                         fontSize: ms(14),
@@ -938,7 +939,7 @@ const BarcodeScannerScreen = ({navigation}) => {
                         width: s(150),
                         right: s(40),
                         fontSize: ms(14),
-                        top: vs(9),
+                        top: vs(5),
                         color: 'black',
                       }}>
                       {barcode2}
@@ -951,7 +952,7 @@ const BarcodeScannerScreen = ({navigation}) => {
                     // />
                     <Text
                       style={{
-                        height: vs(35),
+                        height: vs(42),
                         width: s(150),
                         right: s(40),
                         fontSize: ms(14),
@@ -1012,7 +1013,7 @@ const BarcodeScannerScreen = ({navigation}) => {
               <View>
                 <TextInput
                   style={{
-                    height: vs(40),
+                    height: vs(48),
                     width: s(160),
                     right: s(35),
                     fontSize: ms(15),
@@ -1052,7 +1053,7 @@ const BarcodeScannerScreen = ({navigation}) => {
               <View>
                 <TextInput
                   style={{
-                    height: vs(40),
+                    height: vs(48),
                     width: s(160),
                     right: s(35),
                     fontSize: ms(15),

@@ -54,7 +54,10 @@ const TopTabs = props => {
         }}
         // onPress={() => navigation.navigate('Profile')}>
         onPress={props.tabLeftFunc}>
-        <Image source={props.left} style={{width: s(20), height: s(15)}} />
+        <Image
+          source={props.left}
+          style={{width: s(20), resizeMode: 'contain'}}
+        />
       </TouchableOpacity>
       <TouchableOpacity
         style={{

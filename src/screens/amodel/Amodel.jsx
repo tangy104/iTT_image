@@ -143,7 +143,17 @@ const Addmodel = ({navigation}) => {
       console.log('Response:', response.data);
 
       // Show success message or perform any other actions
-      Alert.alert('Success', 'VC added successfully');
+      Alert.alert('Success', 'VC added successfully', [
+        {
+          text: 'OK',
+          onPress: () => {
+            setVisible(false);
+            setVc('');
+            setImage(null);
+            fetchVcList();
+          },
+        },
+      ]);
     } catch (error) {
       console.error('Error submitting data:', error);
       // Handle error, show error message, etc.
