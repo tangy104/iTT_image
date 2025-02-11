@@ -384,6 +384,199 @@ const CameraScreen = ({navigation, route}) => {
     }
   };
 
+  //initial tin image upload
+  const tinUpload = async () => {
+    setStreaming(true);
+    if (cameraRef) {
+      try {
+        const data = await cameraRef.current.takePictureAsync();
+        console.log(data);
+        console.log(typeof image);
+
+        // Compress the image before uploading
+        const compressedImage = await ImageManipulator.manipulateAsync(
+          data.uri,
+          [{resize: {width: 1500}}], // Resize the image to a width of 800px
+          {compress: 1, format: ImageManipulator.SaveFormat.JPEG}, // Compress and convert to JPEG format
+        );
+        setImage(compressedImage.uri);
+
+        const formData = new FormData();
+        formData.append('file', {
+          // uri: data.uri,
+          uri: compressedImage.uri,
+          type: 'image/jpeg',
+          name: 'image.jpg',
+        });
+        formData.append('vin', route.params.vin);
+        formData.append('axle_location', selectedWheelData.axle_location);
+        formData.append('wheel_pos', selectedWheelData.wheel_pos);
+        formData.append('wheel_id', selectedWheelData.wheel_id);
+        // formData.append('token', globalToken);
+        // formData.append('uid', deviceId);
+        formData.append('forced_entry', '');
+        formData.append('given_make', '');
+
+        console.log('formdata is', formData);
+
+        console.log('really sent it');
+
+        const res = await axios.put(
+          `${creden.URI}/car_tin_make/tin`,
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          },
+        );
+
+        const response = res.data;
+        // console.log('response from server res', res);
+        console.log('response from server tinUpload', response);
+
+        if (
+          response.com === 'First_breakpoint : TIN can not be detected:No ROI'
+        ) {
+          setHasError(true);
+          setHeaders('No TIN detected\nReason: ROI cannot be found');
+        } else if (
+          response.com_char === 'Third_breakpoint:bad_character_detected'
+        ) {
+          setHasError(true);
+          setImage64(response.image);
+          setHeaders(
+            'No TIN detected\nReason: Some characters cannot be detected',
+          );
+        } else if (response.com === 'fourth_breakpoint') {
+          setHasError(true);
+          setHeaders('No TIN detected\nReason: Model failed to detect');
+        } else {
+          setHeaders(response);
+        }
+      } catch (error) {
+        setHasError(true);
+        if (error.response) {
+          // Server responded with a status other than 200 range
+          console.log('Error response data:', error.response.data);
+          console.log('Error response status:', error.response.status);
+          console.log('Error response headers:', error.response.headers);
+
+          if (error.response.status === 400) {
+            let errorDetail = error.response.data.detail;
+
+            if (errorDetail.includes('Make mismatch')) {
+              // Remove Axle and Wheel lines using regex or split-filter-join
+              errorDetail = errorDetail
+                .split('\n')
+                .filter(
+                  line => !line.includes('Axle:') && !line.includes('Wheel:'),
+                )
+                .join('\n');
+
+              console.log('Filtered error detail:', errorDetail);
+              setHeaders(errorDetail); // Set the cleaned-up error message
+            } else {
+              setHeaders(errorDetail);
+            }
+          } else if (error.response.status === 404) {
+            setHeaders(error.response.data.detail);
+          } else if (error.response.status === 441) {
+            setHeaders('No TIN detected\nReason: ROI cannot be found');
+          } else if (error.response.status === 442) {
+            setHeaders('No TIN detected\nReason: Badly captured ROI');
+          } else if (error.response.status === 443) {
+            setImage64(error.response.data.detail);
+            setHeaders(
+              'No TIN detected\nReason: Some characters cannot be detected',
+            );
+          } else if (error.response.status === 444) {
+            setHeaders('No TIN detected\nReason: Model failed to detect');
+          } else if (error.response.status === 500) {
+            setHeaders(error.response.data);
+          } else {
+            setHeaders(error.response.data.detail);
+          }
+          // else if (isBase64(error.response.data.detail)) {
+          //   // <Image
+          //   //   source={{ uri: `data:image/jpeg;base64,${response.detail}` }}
+          //   //   style={{ width: 200, height: 200 }}
+          //   // />
+          //   setImage64(error.response.data.detail);
+          //   setHeaders('Please find the faulty text below.');
+          // }
+        } else if (error.request) {
+          // Request was made but no response received
+          console.log('Error request:', error.request);
+          // setHeaders('No serial number detected');
+          setHeaders('There was an error in server response');
+        } else {
+          // Something else happened in setting up the request
+          console.log('Error message:', error.message);
+        }
+        // console.log('Error config:', error.config);
+      } finally {
+        setStreaming(false);
+        setGotResponse(true);
+      }
+    }
+  };
+
+  //finally uploading to the database
+  const finalUpload = async () => {
+    setStreaming(true);
+    try {
+      const response = await axios.put(
+        `${creden.URI + '/car_wdata/tin'}`,
+        null,
+        {
+          params: {
+            token: globalToken,
+            uid: deviceId,
+            tin: headers['tin'],
+            vin: route.params.vin,
+            axle_location: selectedWheelData.axle_location,
+            wheel_pos: selectedWheelData.wheel_pos,
+            wheel_id: selectedWheelData.wheel_id,
+            make: headers['make'],
+            forced_entry: true,
+            given_make: '',
+          },
+          headers: {
+            accept: 'application/json',
+          },
+        },
+      );
+
+      console.log('response from output final', response.data);
+
+      // setHeaders(response);
+      dispatch(
+        setSelectedWheelDataGlobal({
+          axle_location: null,
+          wheel_pos: null,
+          wheel_id: null,
+          wheel_tin: null,
+        }),
+      );
+      dispatch(setTinGlobal(headers['tin']));
+      navigation.navigate('NewSmodel', {
+        model: route.params.model,
+        responseData: headers['tin'],
+        vin: route.params.vin,
+        // id: route.params.id,
+        // elapsedTime: alertTime,
+      });
+    } catch (error) {
+      setHasError(true);
+      console.error('Error:', error);
+      Alert.alert('There was an error in server response');
+    } finally {
+      setStreaming(false);
+      setGotResponse(true);
+    }
+  };
+
   if (hasCameraPermission === false) {
     return <Text>No access to camera</Text>;
   }
@@ -723,7 +916,7 @@ const CameraScreen = ({navigation, route}) => {
                   alignItems: 'center',
                   width: '70%',
                   minHeight: vs(50),
-                  height: '28%',
+                  height: '30%',
                 }}>
                 {
                   // headers === 'No serial number detected' ||
@@ -750,7 +943,7 @@ const CameraScreen = ({navigation, route}) => {
                           width: s(320),
                           minHeight: vs(50),
                           // height: '28%',
-                          height: vs(200),
+                          height: vs(207),
                         }}>
                         <Text
                           style={{
@@ -998,7 +1191,7 @@ const CameraScreen = ({navigation, route}) => {
                           padding: 5,
                         }}>
                         <Text style={{color: 'black', fontWeight: 'bold'}}>
-                          TIN: {headers['output']}
+                          TIN: {headers['tin']}
                           {/* TIN: {headers.output} */}
                         </Text>
                         <Text style={{color: 'black', fontWeight: 'bold'}}>
@@ -1064,22 +1257,24 @@ const CameraScreen = ({navigation, route}) => {
                             marginTop: vs(5),
                           }}
                           onPress={() => {
-                            dispatch(
-                              setSelectedWheelDataGlobal({
-                                axle_location: null,
-                                wheel_pos: null,
-                                wheel_id: null,
-                                wheel_tin: null,
-                              }),
-                            );
-                            dispatch(setTinGlobal(headers['output']));
-                            navigation.navigate('NewSmodel', {
-                              model: route.params.model,
-                              responseData: headers['output'],
-                              vin: route.params.vin,
-                              // id: route.params.id,
-                              // elapsedTime: alertTime,
-                            });
+                            // dispatch(
+                            //   setSelectedWheelDataGlobal({
+                            //     axle_location: null,
+                            //     wheel_pos: null,
+                            //     wheel_id: null,
+                            //     wheel_tin: null,
+                            //   }),
+                            // );
+                            // dispatch(setTinGlobal(headers['tin']));
+                            // navigation.navigate('NewSmodel', {
+                            //   model: route.params.model,
+                            //   responseData: headers['tin'],
+                            //   vin: route.params.vin,
+                            //   // id: route.params.id,
+                            //   // elapsedTime: alertTime,
+                            // });
+
+                            finalUpload();
                           }}>
                           <Text
                             style={{
@@ -1242,7 +1437,8 @@ const CameraScreen = ({navigation, route}) => {
                     // }}
                     onPress={() => {
                       if (!streaming) {
-                        directUpload();
+                        // directUpload();
+                        tinUpload();
                       }
                     }}>
                     <Text
