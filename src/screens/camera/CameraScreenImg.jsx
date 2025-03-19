@@ -18,15 +18,11 @@ import {useSelector, useDispatch} from 'react-redux';
 import {setTinGlobal} from '../../state/tinslice';
 import {setCreden} from '../../state/credenSlice';
 import {setSelectedWheelDataGlobal} from '../../state/selectSlice';
-import {active, inactive} from '../../state/alertSlice';
-// import {ApiVideoLiveStreamView} from '@api.video/react-native-livestream';
-// import {Camera, CameraType} from 'expo-camera';
-import {CameraView, useCameraPermissions} from 'expo-camera';
+import {CameraView} from 'expo-camera';
 import * as ImageManipulator from 'expo-image-manipulator';
 import {
   GestureHandlerRootView,
   PinchGestureHandler,
-  State,
 } from 'react-native-gesture-handler';
 import DeviceInfo from 'react-native-device-info';
 import axios from 'axios';
@@ -35,10 +31,8 @@ import TopTabs from '../../navigation/TopTabs';
 import Tabs from '../../navigation/Tabs';
 
 import logoApp from '../../utils/images/logoApp.png';
-import dash from '../../utils/images/dash.png';
 import logoKGP2 from '../../utils/images/logoKGP2.png';
 import logout from '../../utils/images/logout.png';
-import doc from '../../utils/images/doc.png';
 import flashIcon from '../../utils/images/flash.png';
 import circarr from '../../utils/images/circarr.png';
 import backS from '../../utils/images/backS.png';
@@ -54,22 +48,17 @@ const CameraScreen = ({navigation, route}) => {
   const [enableManualInput, setEnableManualInput] = useState(true);
   const [manualTIN, setManualTIN] = useState('');
 
-  // const [imageUri, setImageUri] = useState(null);
   const [headers, setHeaders] = useState(null);
   const [imgLoading, setImgLoading] = useState(true);
 
   const [deviceId, setDeviceId] = useState(null);
 
-  //   const [type, setType] = useState(Camera.Constants.Type.back);
-  //   const [type, setType] = useState(Camera.Constants.Type.back);
-  //   const [flash, setFlash] = useState(Camera.Constants.FlashMode.off);
   const [image, setImage] = useState(null);
 
   const [image64, setImage64] = useState(null);
   const [zoom, setZoom] = useState(0);
   const [torch, setTorch] = useState(false);
   const [flash, setFlash] = useState(true);
-  // const [loading, setLoading] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState(null);
   const cameraRef = useRef(null);
 
@@ -91,45 +80,6 @@ const CameraScreen = ({navigation, route}) => {
       // console.log('Zoom out', zoom);
     }
   };
-  //For video
-  // const updateData = async () => {
-  //   try {
-  //     const response = await axios.put(`${creden.URI}/car_wvid/`, null, {
-  //       params: {
-  //         stream_key: `${creden.ticket}`,
-  //         vin: route.params.vin,
-  //         axle_location: selectedWheelData.axle_location,
-  //         wheel_pos: selectedWheelData.wheel_pos,
-  //         wheel_id: selectedWheelData.wheel_id,
-  //         token: globalToken,
-  //         uid: deviceId,
-  //         forced_entry: true,
-  //       },
-  //       headers: {
-  //         Accept: 'application/json',
-  //       },
-  //       responseType: 'arraybuffer',
-  //     });
-  //     ref.current?.stopStreaming();
-  //     setStreaming(false);
-  //     // Verify the base64 data
-  //     const base64Image = response.request._response;
-  //     // console.log('Base64 image data:', base64Image);
-  //     console.log('response headers', response.headers);
-
-  //     // Set the image URI to display the image
-  //     const imageUrl = `data:image/jpg;base64,${base64Image}`;
-  //     // console.log('imageURL', imageUrl);
-  //     setImageUri(imageUrl);
-  //     console.log('setImage', imageUri);
-  //     setBase64(base64Image);
-  //     setHeaders(response.headers);
-  //     setGotResponse(true);
-  //   } catch (error) {
-  //     console.error('Error updating data:', error);
-  //   } finally {
-  //   }
-  // };
 
   //For logout
   const handleLogout = async () => {
@@ -160,7 +110,6 @@ const CameraScreen = ({navigation, route}) => {
               AsyncStorage.setItem('ticket', '');
               AsyncStorage.setItem('isLoggedIn', '');
               console.log('Logout successful', response.data);
-              // navigation.navigate('Login');
               navigation.navigate('LoginNav', {screen: 'Login'});
             } catch (error) {
               console.error('Error logging out', error);
@@ -199,21 +148,7 @@ const CameraScreen = ({navigation, route}) => {
     if (hasCameraPermission?.granted) requestPermissionAgain();
   }, []);
 
-  //For taking picture
-
-  // const takePicture = async () => {
-  //   if (cameraRef) {
-  //     try {
-  //       const data = await cameraRef.current.takePictureAsync();
-  //       console.log(data);
-  //       setImage(data.uri);
-  //       console.log(typeof image);
-  //     } catch (e) {
-  //       console.log(e);
-  //     }
-  //   }
-  // };
-
+  //For determining if the string is base64
   const isBase64 = str => {
     const base64Regex =
       /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
@@ -385,25 +320,166 @@ const CameraScreen = ({navigation, route}) => {
   };
 
   //initial tin image upload
+  // const tinUpload = async () => {
+  //   setStreaming(true);
+  //   if (cameraRef) {
+  //     try {
+  //       const data = await cameraRef.current.takePictureAsync();
+  //       console.log(data);
+  //       console.log(typeof image);
+
+  //       // Compress the image before uploading
+  //       const compressedImage = await ImageManipulator.manipulateAsync(
+  //         data.uri,
+  //         [{resize: {width: 1500}}], // Resize the image to a width of 800px
+  //         {compress: 1, format: ImageManipulator.SaveFormat.JPEG}, // Compress and convert to JPEG format
+  //       );
+  //       setImage(compressedImage.uri);
+
+  //       const formData = new FormData();
+  //       formData.append('file', {
+  //         // uri: data.uri,
+  //         uri: compressedImage.uri,
+  //         type: 'image/jpeg',
+  //         name: 'image.jpg',
+  //       });
+  //       formData.append('vin', route.params.vin);
+  //       formData.append('axle_location', selectedWheelData.axle_location);
+  //       formData.append('wheel_pos', selectedWheelData.wheel_pos);
+  //       formData.append('wheel_id', selectedWheelData.wheel_id);
+  //       // formData.append('token', globalToken);
+  //       // formData.append('uid', deviceId);
+  //       formData.append('forced_entry', '');
+  //       formData.append('given_make', '');
+
+  //       console.log('formdata is', formData);
+
+  //       console.log('really sent it');
+
+  //       //direct request to the server
+  //       const res = await axios.put(
+  //         `${creden.URI}/car_tin_make/tin`,
+  //         formData,
+  //         {
+  //           headers: {
+  //             'Content-Type': 'multipart/form-data',
+  //           },
+  //           timeout: 6000, // 9 seconds timeout
+  //         },
+  //       );
+
+  //       const response = res.data;
+  //       // console.log('response from server res', res);
+  //       console.log('response from server tinUpload', response);
+
+  //       if (
+  //         response.com === 'First_breakpoint : TIN can not be detected:No ROI'
+  //       ) {
+  //         setHasError(true);
+  //         setHeaders('No TIN detected\nReason: ROI cannot be found');
+  //       } else if (
+  //         response.com_char === 'Third_breakpoint:bad_character_detected'
+  //       ) {
+  //         setHasError(true);
+  //         setImage64(response.image);
+  //         setHeaders(
+  //           'No TIN detected\nReason: Some characters cannot be detected',
+  //         );
+  //       } else if (response.com === 'fourth_breakpoint') {
+  //         setHasError(true);
+  //         setHeaders('No TIN detected\nReason: Model failed to detect');
+  //       } else {
+  //         setHeaders(response);
+  //       }
+  //     } catch (error) {
+  //       setHasError(true);
+  //       if (error.code === 'ECONNABORTED') {
+  //         console.log('Timeout error: Request took too long to respond.');
+  //         setHeaders('Request timed out. Please try again.');
+  //       } else if (error.response) {
+  //         // Server responded with a status other than 200 range
+  //         console.log('Error response data:', error.response.data);
+  //         console.log('Error response status:', error.response.status);
+  //         console.log('Error response headers:', error.response.headers);
+
+  //         if (error.response.status === 400) {
+  //           let errorDetail = error.response.data.detail;
+
+  //           if (errorDetail.includes('Make mismatch')) {
+  //             // Remove Axle and Wheel lines using regex or split-filter-join
+  //             errorDetail = errorDetail
+  //               .split('\n')
+  //               .filter(
+  //                 line => !line.includes('Axle:') && !line.includes('Wheel:'),
+  //               )
+  //               .join('\n');
+
+  //             console.log('Filtered error detail:', errorDetail);
+  //             setHeaders(errorDetail); // Set the cleaned-up error message
+  //           } else {
+  //             setHeaders(errorDetail);
+  //           }
+  //         } else if (error.response.status === 404) {
+  //           setHeaders(error.response.data.detail);
+  //         } else if (error.response.status === 441) {
+  //           setHeaders('No TIN detected\nReason: ROI cannot be found');
+  //         } else if (error.response.status === 442) {
+  //           setHeaders('No TIN detected\nReason: Badly captured ROI');
+  //         } else if (error.response.status === 443) {
+  //           setImage64(error.response.data.detail);
+  //           setHeaders(
+  //             'No TIN detected\nReason: Some characters cannot be detected',
+  //           );
+  //         } else if (error.response.status === 444) {
+  //           setHeaders('No TIN detected\nReason: Model failed to detect');
+  //         } else if (error.response.status === 500) {
+  //           setHeaders(error.response.data);
+  //         } else {
+  //           setHeaders(error.response.data.detail);
+  //         }
+  //         // else if (isBase64(error.response.data.detail)) {
+  //         //   // <Image
+  //         //   //   source={{ uri: `data:image/jpeg;base64,${response.detail}` }}
+  //         //   //   style={{ width: 200, height: 200 }}
+  //         //   // />
+  //         //   setImage64(error.response.data.detail);
+  //         //   setHeaders('Please find the faulty text below.');
+  //         // }
+  //       } else if (error.request) {
+  //         // Request was made but no response received
+  //         console.log('Error request:', error.request);
+  //         // setHeaders('No serial number detected');
+  //         setHeaders('There was an error in server response');
+  //       } else {
+  //         // Something else happened in setting up the request
+  //         console.log('Error message:', error.message);
+  //       }
+  //       // console.log('Error config:', error.config);
+  //     } finally {
+  //       setStreaming(false);
+  //       setGotResponse(true);
+  //     }
+  //   }
+  // };
+
+  //new tin image upload
   const tinUpload = async () => {
     setStreaming(true);
     if (cameraRef) {
       try {
         const data = await cameraRef.current.takePictureAsync();
         console.log(data);
-        console.log(typeof image);
 
         // Compress the image before uploading
         const compressedImage = await ImageManipulator.manipulateAsync(
           data.uri,
-          [{resize: {width: 1500}}], // Resize the image to a width of 800px
-          {compress: 1, format: ImageManipulator.SaveFormat.JPEG}, // Compress and convert to JPEG format
+          [{resize: {width: 1500}}],
+          {compress: 1, format: ImageManipulator.SaveFormat.JPEG},
         );
         setImage(compressedImage.uri);
 
         const formData = new FormData();
         formData.append('file', {
-          // uri: data.uri,
           uri: compressedImage.uri,
           type: 'image/jpeg',
           name: 'image.jpg',
@@ -412,113 +488,138 @@ const CameraScreen = ({navigation, route}) => {
         formData.append('axle_location', selectedWheelData.axle_location);
         formData.append('wheel_pos', selectedWheelData.wheel_pos);
         formData.append('wheel_id', selectedWheelData.wheel_id);
-        // formData.append('token', globalToken);
-        // formData.append('uid', deviceId);
         formData.append('forced_entry', '');
         formData.append('given_make', '');
 
-        console.log('formdata is', formData);
+        console.log('FormData prepared');
 
-        console.log('really sent it');
+        let attempt = 0;
+        const maxAttempts = 2; // Max retries
+        const baseDelay = 1000; // Initial delay (1s)
 
-        const res = await axios.put(
-          `${creden.URI}/car_tin_make/tin`,
-          formData,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          },
-        );
+        while (attempt < maxAttempts) {
+          try {
+            const res = await axios.put(
+              `${creden.URI}/car_tin_make/tin`,
+              formData,
+              {
+                headers: {'Content-Type': 'multipart/form-data'},
+                timeout: 6000, // Timeout for each attempt
+              },
+            );
 
-        const response = res.data;
-        // console.log('response from server res', res);
-        console.log('response from server tinUpload', response);
+            const response = res.data;
+            console.log('Response from server:', response);
 
-        if (
-          response.com === 'First_breakpoint : TIN can not be detected:No ROI'
-        ) {
-          setHasError(true);
-          setHeaders('No TIN detected\nReason: ROI cannot be found');
-        } else if (
-          response.com_char === 'Third_breakpoint:bad_character_detected'
-        ) {
-          setHasError(true);
-          setImage64(response.image);
-          setHeaders(
-            'No TIN detected\nReason: Some characters cannot be detected',
-          );
-        } else if (response.com === 'fourth_breakpoint') {
-          setHasError(true);
-          setHeaders('No TIN detected\nReason: Model failed to detect');
-        } else {
-          setHeaders(response);
+            if (
+              response.com ===
+              'First_breakpoint : TIN can not be detected:No ROI'
+            ) {
+              setHasError(true);
+              setHeaders('No TIN detected\nReason: ROI cannot be found');
+            } else if (
+              response.com_char === 'Third_breakpoint:bad_character_detected'
+            ) {
+              setHasError(true);
+              setImage64(response.image);
+              setHeaders(
+                'No TIN detected\nReason: Some characters cannot be detected',
+              );
+            } else if (response.com === 'fourth_breakpoint') {
+              setHasError(true);
+              setHeaders('No TIN detected\nReason: Model failed to detect');
+            } else if (response.tin === '') {
+              console.log('response for tin', response.tin === '');
+              setHasError(true);
+              setHeaders(
+                `No TIN detected\nReason: Model failed to detect\n\n`,
+                // `com: ${response.com || 'N/A'}\n` +
+                // `com_inv: ${response.com_inv || 'N/A'}\n` +
+                // `com_char: ${response.com_char || 'N/A'}`,
+              );
+            } else {
+              console.log('response for tin', response.tin === '');
+              setHeaders(response);
+            }
+
+            break; // Success, exit loop
+          } catch (error) {
+            if (error.response) {
+              // Server returned an explicit error; don't retry
+              console.log('Server responded with error:', error.response.data);
+              handleServerError(error.response);
+              break;
+            } else if (error.request) {
+              // No response received; retry with exponential backoff
+              attempt++;
+              console.log(
+                `Request error. Retrying attempt ${
+                  attempt + 1
+                }/${maxAttempts}...`,
+              );
+              if (attempt < maxAttempts) {
+                await new Promise(resolve =>
+                  setTimeout(resolve, baseDelay * 2 ** (attempt - 1)),
+                );
+              } else {
+                setHasError(true);
+                setHeaders(
+                  'There was an error in server response. Please try again.',
+                );
+              }
+            } else {
+              // Unknown error
+              console.log('Unexpected error:', error.message);
+              setHasError(true);
+              setHeaders('An unexpected error occurred.');
+              break;
+            }
+          }
         }
       } catch (error) {
+        console.log('Unexpected error before request:', error);
         setHasError(true);
-        if (error.response) {
-          // Server responded with a status other than 200 range
-          console.log('Error response data:', error.response.data);
-          console.log('Error response status:', error.response.status);
-          console.log('Error response headers:', error.response.headers);
-
-          if (error.response.status === 400) {
-            let errorDetail = error.response.data.detail;
-
-            if (errorDetail.includes('Make mismatch')) {
-              // Remove Axle and Wheel lines using regex or split-filter-join
-              errorDetail = errorDetail
-                .split('\n')
-                .filter(
-                  line => !line.includes('Axle:') && !line.includes('Wheel:'),
-                )
-                .join('\n');
-
-              console.log('Filtered error detail:', errorDetail);
-              setHeaders(errorDetail); // Set the cleaned-up error message
-            } else {
-              setHeaders(errorDetail);
-            }
-          } else if (error.response.status === 404) {
-            setHeaders(error.response.data.detail);
-          } else if (error.response.status === 441) {
-            setHeaders('No TIN detected\nReason: ROI cannot be found');
-          } else if (error.response.status === 442) {
-            setHeaders('No TIN detected\nReason: Badly captured ROI');
-          } else if (error.response.status === 443) {
-            setImage64(error.response.data.detail);
-            setHeaders(
-              'No TIN detected\nReason: Some characters cannot be detected',
-            );
-          } else if (error.response.status === 444) {
-            setHeaders('No TIN detected\nReason: Model failed to detect');
-          } else if (error.response.status === 500) {
-            setHeaders(error.response.data);
-          } else {
-            setHeaders(error.response.data.detail);
-          }
-          // else if (isBase64(error.response.data.detail)) {
-          //   // <Image
-          //   //   source={{ uri: `data:image/jpeg;base64,${response.detail}` }}
-          //   //   style={{ width: 200, height: 200 }}
-          //   // />
-          //   setImage64(error.response.data.detail);
-          //   setHeaders('Please find the faulty text below.');
-          // }
-        } else if (error.request) {
-          // Request was made but no response received
-          console.log('Error request:', error.request);
-          // setHeaders('No serial number detected');
-          setHeaders('There was an error in server response');
-        } else {
-          // Something else happened in setting up the request
-          console.log('Error message:', error.message);
-        }
-        // console.log('Error config:', error.config);
+        setHeaders('An error occurred while processing the request.');
       } finally {
         setStreaming(false);
         setGotResponse(true);
       }
+    }
+  };
+
+  // Function to handle known server errors
+  const handleServerError = response => {
+    setHasError(true);
+    const status = response.status;
+    const data = response.data;
+
+    if (status === 400) {
+      let errorDetail = data.detail;
+      if (errorDetail.includes('Make mismatch')) {
+        errorDetail = errorDetail
+          .split('\n')
+          .filter(line => !line.includes('Axle:') && !line.includes('Wheel:'))
+          .join('\n');
+        console.log('Filtered error detail:', errorDetail);
+        setHeaders(errorDetail);
+      } else {
+        setHeaders(errorDetail);
+      }
+    } else if (status === 404) {
+      setHeaders(data.detail);
+    } else if (status === 441) {
+      setHeaders('No TIN detected\nReason: ROI cannot be found');
+    } else if (status === 442) {
+      setHeaders('No TIN detected\nReason: Badly captured ROI');
+    } else if (status === 443) {
+      setImage64(data.detail);
+      setHeaders('No TIN detected\nReason: Some characters cannot be detected');
+    } else if (status === 444) {
+      setHeaders('No TIN detected\nReason: Model failed to detect');
+    } else if (status === 500) {
+      setHeaders(data);
+    } else {
+      setHeaders(data.detail);
     }
   };
 
